@@ -40,7 +40,7 @@ export default function PositioningMap({ value, options, onChange }: Positioning
       <div className="flex items-center justify-between gap-3">
         <label className="text-sm font-medium text-stone-800">Positioning Map</label>
         <span className="text-xs text-stone-400">
-          {value ? "Click to reposition" : "Click anywhere on the map"}
+          {value ? "클릭해서 위치를 다시 지정하세요" : "맵의 원하는 위치를 클릭하세요"}
         </span>
       </div>
       <div className="rounded-2xl border border-stone-200 bg-white p-3">

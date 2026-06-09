@@ -24,8 +24,42 @@ type ToastState = {
 } | null;
 
 const deepClone = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+const flattenOptionValues = (source: readonly string[] | Record<string, readonly string[]>) =>
+  Array.isArray(source) ? [...source] : Object.values(source).flatMap((group) => [...group]);
+const createOptionSet = (source: readonly string[] | Record<string, readonly string[]>) =>
+  new Set(flattenOptionValues(source).map((item) => item.trim().toLowerCase()));
 
 const legacyPositioningSet = new Set<string>(Object.keys(legacyPositioningPointMap));
+const allDefinedMoodSet = createOptionSet(chipOptions.concept.mood.brand_personality);
+const allDefinedObjectDetailSet = createOptionSet(chipOptions.object.details);
+const objectSurfaceSet = createOptionSet(chipOptions.object.surface);
+const compositionViewSet = createOptionSet(chipOptions.composition.view);
+const compositionAngleSet = createOptionSet(chipOptions.composition.angle);
+const compositionPlacementSet = createOptionSet(chipOptions.composition.placement);
+const compositionFramingSet = createOptionSet(chipOptions.composition.framing);
+const compositionLayoutSet = createOptionSet(chipOptions.composition.layout);
+const compositionBalanceSet = createOptionSet(chipOptions.composition.balance);
+const compositionDepthSet = createOptionSet(chipOptions.composition.depth);
+const lightingMainLightSet = createOptionSet(chipOptions.lighting.main_light);
+const lightingHighlightSet = createOptionSet(chipOptions.lighting.highlight);
+const lightingGlowSet = createOptionSet(chipOptions.lighting.glow);
+const lightingShadowSet = createOptionSet(chipOptions.lighting.shadow);
+const lightingMoodSet = createOptionSet(chipOptions.lighting.mood);
+const lightingRenderingStyleSet = createOptionSet(chipOptions.lighting.rendering_style);
+const backgroundColorSet = createOptionSet(chipOptions.background.color);
+const backgroundStyleSet = createOptionSet(chipOptions.background.style);
+const backgroundSurfaceSet = createOptionSet(chipOptions.background.surface);
+const backgroundPurposeSet = createOptionSet(chipOptions.background.purpose);
+const colorPrimarySet = createOptionSet(chipOptions.color_palette.primary);
+const colorAccentSet = createOptionSet(chipOptions.color_palette.accent);
+const colorContrastSet = createOptionSet(chipOptions.color_palette.contrast);
+const textTopLeftSet = createOptionSet(chipOptions.text_elements.top_left_text);
+const textPriceLabelSet = createOptionSet(chipOptions.text_elements.price_label);
+const textBottomLabelSet = createOptionSet(chipOptions.text_elements.bottom_labels);
+const textDirectionSet = createOptionSet(chipOptions.text_elements.text_direction);
+const textNoteSet = createOptionSet(chipOptions.text_elements.note);
+const styleKeywordSet = createOptionSet(chipOptions.style_keywords);
+const negativePromptSet = createOptionSet(chipOptions.negative_prompt);
 const invalidLegacyMoodSet = new Set<string>([
   "mass maket",
   "mass market",
@@ -42,8 +76,11 @@ const invalidLegacyMoodSet = new Set<string>([
 const sanitizeMoodValues = (values: string[]) =>
   values.filter((value) => {
     const normalized = value.trim().toLowerCase();
-    return !legacyPositioningSet.has(normalized) && !invalidLegacyMoodSet.has(normalized);
+    return !legacyPositioningSet.has(normalized) && !invalidLegacyMoodSet.has(normalized) && allDefinedMoodSet.has(normalized);
   });
+const sanitizeOptionValues = (values: string[], allowed: Set<string>) =>
+  values.filter((value) => allowed.has(value.trim().toLowerCase()));
+const sanitizeOptionValue = (value: string, allowed: Set<string>) => (allowed.has(value.trim().toLowerCase()) ? value : "");
 
 const inferPositioningPointFromMood = (values: string[]): PositioningPoint | null => {
   const legacyValue = values.find((value) => legacyPositioningSet.has(value));
@@ -51,7 +88,6 @@ const inferPositioningPointFromMood = (values: string[]): PositioningPoint | nul
 };
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
-const allDefinedMoodSet = new Set<string>(chipOptions.concept.mood.brand_personality);
 
 const getMoodRecommendations = (point: PositioningPoint | null) => {
   if (!point) return [];
@@ -61,7 +97,7 @@ const getMoodRecommendations = (point: PositioningPoint | null) => {
       id: profile.id,
       score: 1 - Math.hypot(point.x - profile.x, point.y - profile.y) / 2.5,
     }))
-    .filter((item) => allDefinedMoodSet.has(item.id))
+    .filter((item) => allDefinedMoodSet.has(item.id.trim().toLowerCase()))
     .filter((item) => item.score > 0.2)
     .sort((left, right) => right.score - left.score)
     .slice(0, 10);
@@ -93,7 +129,6 @@ const mergePrompt = (input: unknown): VisualPrompt => {
         : [],
     },
     composition: { ...next.composition, ...(source.composition as object) },
-    texture: { ...next.texture, ...(source.texture as object) },
     lighting: { ...next.lighting, ...(source.lighting as object) },
     background: { ...next.background, ...(source.background as object) },
     color_palette: { ...next.color_palette, ...(source.color_palette as object) },
@@ -105,15 +140,60 @@ const mergePrompt = (input: unknown): VisualPrompt => {
 
   merged.prompt_type = "structured_visual_prompt";
   merged.concept.mood = Array.isArray(merged.concept.mood) ? sanitizeMoodValues(merged.concept.mood) : [];
-  merged.object.details = Array.isArray(merged.object.details) ? merged.object.details : [];
-  merged.composition.layout = Array.isArray(merged.composition.layout) ? merged.composition.layout : [];
-  merged.texture.package_surface = Array.isArray(merged.texture.package_surface) ? merged.texture.package_surface : [];
-  merged.texture.typography = Array.isArray(merged.texture.typography) ? merged.texture.typography : [];
-  merged.texture.stickers = Array.isArray(merged.texture.stickers) ? merged.texture.stickers : [];
-  merged.texture.objects = Array.isArray(merged.texture.objects) ? merged.texture.objects : [];
-  merged.color_palette.primary = Array.isArray(merged.color_palette.primary) ? merged.color_palette.primary : [];
-  merged.color_palette.accent = Array.isArray(merged.color_palette.accent) ? merged.color_palette.accent : [];
-  merged.text_elements.bottom_labels = Array.isArray(merged.text_elements.bottom_labels) ? merged.text_elements.bottom_labels : [];
+  merged.object.details = Array.isArray(merged.object.details)
+    ? sanitizeOptionValues(merged.object.details, allDefinedObjectDetailSet)
+    : [];
+  const legacyTexture = source.texture as
+    | {
+        surface?: unknown;
+        package_surface?: unknown;
+      }
+    | undefined;
+  merged.object.surface = sanitizeOptionValues(
+    [
+      ...(Array.isArray(merged.object.surface) ? merged.object.surface : []),
+      ...(Array.isArray(legacyTexture?.surface) ? legacyTexture.surface.filter((item): item is string => typeof item === "string") : []),
+      ...(Array.isArray(legacyTexture?.package_surface)
+        ? legacyTexture.package_surface.filter((item): item is string => typeof item === "string")
+        : []),
+    ],
+    objectSurfaceSet
+  );
+  merged.composition.view = sanitizeOptionValue(merged.composition.view, compositionViewSet);
+  merged.composition.angle = sanitizeOptionValue(merged.composition.angle, compositionAngleSet);
+  merged.composition.placement = sanitizeOptionValue(merged.composition.placement, compositionPlacementSet);
+  merged.composition.framing = sanitizeOptionValue(merged.composition.framing, compositionFramingSet);
+  merged.composition.layout = Array.isArray(merged.composition.layout)
+    ? sanitizeOptionValues(merged.composition.layout, compositionLayoutSet)
+    : [];
+  merged.composition.balance = sanitizeOptionValue(merged.composition.balance, compositionBalanceSet);
+  merged.composition.depth = sanitizeOptionValue(merged.composition.depth, compositionDepthSet);
+  merged.lighting.main_light = sanitizeOptionValue(merged.lighting.main_light, lightingMainLightSet);
+  merged.lighting.highlight = sanitizeOptionValue(merged.lighting.highlight, lightingHighlightSet);
+  merged.lighting.glow = sanitizeOptionValue(merged.lighting.glow, lightingGlowSet);
+  merged.lighting.shadow = sanitizeOptionValue(merged.lighting.shadow, lightingShadowSet);
+  merged.lighting.mood = sanitizeOptionValue(merged.lighting.mood, lightingMoodSet);
+  merged.lighting.rendering_style = sanitizeOptionValue(merged.lighting.rendering_style, lightingRenderingStyleSet);
+  merged.background.color = sanitizeOptionValue(merged.background.color, backgroundColorSet);
+  merged.background.style = sanitizeOptionValue(merged.background.style, backgroundStyleSet);
+  merged.background.surface = sanitizeOptionValue(merged.background.surface, backgroundSurfaceSet);
+  merged.background.purpose = sanitizeOptionValue(merged.background.purpose, backgroundPurposeSet);
+  merged.color_palette.primary = Array.isArray(merged.color_palette.primary)
+    ? sanitizeOptionValues(merged.color_palette.primary, colorPrimarySet)
+    : [];
+  merged.color_palette.accent = Array.isArray(merged.color_palette.accent)
+    ? sanitizeOptionValues(merged.color_palette.accent, colorAccentSet)
+    : [];
+  merged.color_palette.contrast = sanitizeOptionValue(merged.color_palette.contrast, colorContrastSet);
+  merged.text_elements.top_left_text = sanitizeOptionValue(merged.text_elements.top_left_text, textTopLeftSet);
+  merged.text_elements.price_label = sanitizeOptionValue(merged.text_elements.price_label, textPriceLabelSet);
+  merged.text_elements.bottom_labels = Array.isArray(merged.text_elements.bottom_labels)
+    ? sanitizeOptionValues(merged.text_elements.bottom_labels, textBottomLabelSet)
+    : [];
+  merged.text_elements.text_direction = sanitizeOptionValue(merged.text_elements.text_direction, textDirectionSet);
+  merged.text_elements.note = sanitizeOptionValue(merged.text_elements.note, textNoteSet);
+  merged.style_keywords = sanitizeOptionValues(merged.style_keywords, styleKeywordSet);
+  merged.negative_prompt = sanitizeOptionValues(merged.negative_prompt, negativePromptSet);
 
   return merged;
 };
@@ -178,10 +258,13 @@ export default function App() {
   );
   const filteredMoodGroups = useMemo(() => {
     const filtered = moodRecommendations.map((item) => item.id);
+    const allMoodsSorted = [...chipOptions.concept.mood.brand_personality].sort((left, right) =>
+      left.localeCompare(right)
+    );
 
     return {
       suggested: filtered,
-      "all moods": chipOptions.concept.mood.brand_personality,
+      "all moods": allMoodsSorted,
     };
   }, [moodRecommendations]);
 
@@ -244,7 +327,7 @@ export default function App() {
   const patchNestedSection = <
     K extends keyof Pick<
       VisualPrompt,
-      "concept" | "object" | "composition" | "texture" | "lighting" | "background" | "color_palette" | "text_elements"
+      "concept" | "object" | "composition" | "lighting" | "background" | "color_palette" | "text_elements"
     >,
     F extends keyof VisualPrompt[K]
   >(
@@ -350,8 +433,8 @@ export default function App() {
             collapsibleGroups={["all moods"]}
             placeholder={
               selectedPositioningPoint
-                ? "Add a custom mood that matches this positioning"
-                : "Choose a positioning first or add a custom mood"
+                ? "현재 포지셔닝에 어울리는 무드를 직접 추가해보세요"
+                : "포지셔닝을 먼저 고르거나 무드를 직접 추가해보세요"
             }
           />
         </div>
@@ -366,19 +449,27 @@ export default function App() {
             value={prompt.object.main_object}
             onChange={(value) => patchNestedSection("object", "main_object", value)}
             placeholder="glossy black semi-transparent plastic pouch"
+            caption="제품이나 핵심 피사체 자체를 적어주세요. 소재 + 제품 유형처럼 구체적인 명사구로 쓰면 좋아요."
           />
           <TextInputField
             label="Shape"
             value={prompt.object.shape}
             onChange={(value) => patchNestedSection("object", "shape", value)}
             placeholder="vertical rectangular pouch with heat-sealed edges"
+            caption="실루엣이나 구조를 한 줄로 설명해 주세요. 비율, 형태, 구조적 특징이 드러나면 좋습니다."
           />
           <GroupedChipSelector
             label="Details"
             selected={prompt.object.details}
             groups={chipOptions.object.details}
             onChange={(value) => patchNestedSection("object", "details", value)}
-            placeholder="Add a custom detail and press Enter"
+            placeholder="커스텀 디테일을 입력하고 Enter를 누르세요"
+          />
+          <ChipSelector
+            label="Surface"
+            selected={prompt.object.surface}
+            options={chipOptions.object.surface}
+            onChange={(value) => patchNestedSection("object", "surface", value)}
           />
           <NestedObjectList
             items={prompt.object.inside_objects}
@@ -432,37 +523,6 @@ export default function App() {
             value={prompt.composition.depth}
             onChange={(value) => patchNestedSection("composition", "depth", value)}
             suggestions={chipOptions.composition.depth}
-          />
-        </div>
-      ),
-    },
-    {
-      title: "Texture",
-      content: (
-        <div className="space-y-4">
-          <ChipSelector
-            label="Package Surface"
-            selected={prompt.texture.package_surface}
-            options={chipOptions.texture.package_surface}
-            onChange={(value) => patchNestedSection("texture", "package_surface", value)}
-          />
-          <ChipSelector
-            label="Typography"
-            selected={prompt.texture.typography}
-            options={chipOptions.texture.typography}
-            onChange={(value) => patchNestedSection("texture", "typography", value)}
-          />
-          <ChipSelector
-            label="Stickers"
-            selected={prompt.texture.stickers}
-            options={chipOptions.texture.stickers}
-            onChange={(value) => patchNestedSection("texture", "stickers", value)}
-          />
-          <ChipSelector
-            label="Objects"
-            selected={prompt.texture.objects}
-            options={chipOptions.texture.objects}
-            onChange={(value) => patchNestedSection("texture", "objects", value)}
           />
         </div>
       ),

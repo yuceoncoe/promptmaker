@@ -10,6 +10,7 @@ export const calculateQualityScore = (prompt: VisualPrompt): number => {
   if (
     hasText(prompt.object.main_object, prompt.object.shape) ||
     hasItems(prompt.object.details) ||
+    hasItems(prompt.object.surface) ||
     prompt.object.inside_objects.length > 0
   ) score += 20;
   if (
@@ -21,12 +22,6 @@ export const calculateQualityScore = (prompt: VisualPrompt): number => {
       prompt.composition.balance,
       prompt.composition.depth
     ) || hasItems(prompt.composition.layout)
-  ) score += 15;
-  if (
-    hasItems(prompt.texture.package_surface) ||
-    hasItems(prompt.texture.typography) ||
-    hasItems(prompt.texture.stickers) ||
-    hasItems(prompt.texture.objects)
   ) score += 15;
   if (
     hasText(

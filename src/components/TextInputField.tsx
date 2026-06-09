@@ -5,6 +5,7 @@ interface TextInputFieldProps {
   placeholder?: string;
   multiline?: boolean;
   suggestions?: readonly string[];
+  caption?: string;
 }
 
 export default function TextInputField({
@@ -14,6 +15,7 @@ export default function TextInputField({
   placeholder,
   multiline = false,
   suggestions = [],
+  caption,
 }: TextInputFieldProps) {
   const commonClassName =
     "w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition focus:border-stone-400 focus:ring-2 focus:ring-stone-200";
@@ -59,6 +61,7 @@ export default function TextInputField({
           })}
         </div>
       ) : null}
+      {caption ? <p className="text-xs leading-5 text-stone-500">{caption}</p> : null}
     </div>
   );
 }

@@ -41,6 +41,10 @@ export const buildFinalPrompt = (prompt: VisualPrompt): string => {
     parts.push(`Object details: ${joinList(prompt.object.details)}.`);
   }
 
+  if (prompt.object.surface.length > 0) {
+    parts.push(`Surface: ${joinList(prompt.object.surface)}.`);
+  }
+
   const insideObjects = insideObjectSummary(prompt.object.inside_objects);
   if (insideObjects) {
     parts.push(insideObjects);
@@ -57,16 +61,6 @@ export const buildFinalPrompt = (prompt: VisualPrompt): string => {
   ].filter(nonEmpty);
   if (compositionParts.length > 0) {
     parts.push(`Use ${compositionParts.join(", ")}.`);
-  }
-
-  const textureParts = [
-    ...prompt.texture.package_surface,
-    ...prompt.texture.typography,
-    ...prompt.texture.stickers,
-    ...prompt.texture.objects,
-  ].filter(nonEmpty);
-  if (textureParts.length > 0) {
-    parts.push(`Apply ${textureParts.join(", ")}.`);
   }
 
   const lightingParts = [

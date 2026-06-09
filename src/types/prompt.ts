@@ -15,6 +15,7 @@ export interface VisualPrompt {
     main_object: string;
     shape: string;
     details: string[];
+    surface: string[];
     inside_objects: InsideObject[];
   };
   composition: {
@@ -25,12 +26,6 @@ export interface VisualPrompt {
     layout: string[];
     balance: string;
     depth: string;
-  };
-  texture: {
-    package_surface: string[];
-    typography: string[];
-    stickers: string[];
-    objects: string[];
   };
   lighting: {
     main_light: string;
@@ -74,6 +69,7 @@ export const EMPTY_PROMPT: VisualPrompt = {
     main_object: "",
     shape: "",
     details: [],
+    surface: [],
     inside_objects: [],
   },
   composition: {
@@ -84,12 +80,6 @@ export const EMPTY_PROMPT: VisualPrompt = {
     layout: [],
     balance: "",
     depth: "",
-  },
-  texture: {
-    package_surface: [],
-    typography: [],
-    stickers: [],
-    objects: [],
   },
   lighting: {
     main_light: "",
