@@ -8,7 +8,7 @@ import PresetSelector from "./components/PresetSelector";
 import ResultPanel from "./components/ResultPanel";
 import TextInputField from "./components/TextInputField";
 import Toast from "./components/Toast";
-import { chipOptions, legacyPositioningPointMap, moodProfiles, positioningMap } from "./data/chipOptions";
+import { chipOptions, legacyPositioningPointMap, moodProfiles, positioningMap, stylingProfiles } from "./data/chipOptions";
 import { presets } from "./data/presets";
 import { EMPTY_PROMPT, type VisualPrompt } from "./types/prompt";
 import { buildFinalPrompt } from "./utils/buildFinalPrompt";
@@ -31,6 +31,8 @@ const createOptionSet = (source: readonly string[] | Record<string, readonly str
 
 const legacyPositioningSet = new Set<string>(Object.keys(legacyPositioningPointMap));
 const allDefinedMoodSet = createOptionSet(chipOptions.concept.mood.brand_personality);
+const allDefinedStylingSet = createOptionSet(chipOptions.concept.styling);
+const allDefinedObjectMaterialSet = createOptionSet(chipOptions.object.material);
 const allDefinedObjectDetailSet = createOptionSet(chipOptions.object.details);
 const objectSurfaceSet = createOptionSet(chipOptions.object.surface);
 const compositionViewSet = createOptionSet(chipOptions.composition.view);
@@ -72,15 +74,30 @@ const invalidLegacyMoodSet = new Set<string>([
   "functional clarity",
   "expressive character",
 ]);
+const legacyStylingAliasMap: Record<string, string> = {
+  "layered object styling": "campaign key visual",
+  "premium product styling": "premium packshot",
+  "playful graphic styling": "graphic image-making",
+  "minimal industrial styling": "sculptural minimalism",
+  "editorial sculptural styling": "editorial still life",
+  "luxury beauty styling": "luxury beauty campaign",
+  "sport-driven styling": "sport performance",
+  "retail-ready styling": "retail shelf impact",
+  "gallery display styling": "gallery display",
+  "technical product styling": "tech launch",
+};
 
 const sanitizeMoodValues = (values: string[]) =>
   values.filter((value) => {
     const normalized = value.trim().toLowerCase();
     return !legacyPositioningSet.has(normalized) && !invalidLegacyMoodSet.has(normalized) && allDefinedMoodSet.has(normalized);
   });
+const normalizeStylingValue = (value: string) => legacyStylingAliasMap[value.trim().toLowerCase()] ?? value;
 const sanitizeOptionValues = (values: string[], allowed: Set<string>) =>
   values.filter((value) => allowed.has(value.trim().toLowerCase()));
 const sanitizeOptionValue = (value: string, allowed: Set<string>) => (allowed.has(value.trim().toLowerCase()) ? value : "");
+const sanitizeStylingValues = (values: string[]) =>
+  sanitizeOptionValues(values.map(normalizeStylingValue), allDefinedStylingSet);
 
 const inferPositioningPointFromMood = (values: string[]): PositioningPoint | null => {
   const legacyValue = values.find((value) => legacyPositioningSet.has(value));
@@ -89,22 +106,36 @@ const inferPositioningPointFromMood = (values: string[]): PositioningPoint | nul
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
-const getMoodRecommendations = (point: PositioningPoint | null) => {
+const getPositionedRecommendations = (
+  point: PositioningPoint | null,
+  profiles: readonly { id: string; x: number; y: number }[],
+  allowed: Set<string>,
+  limit = 10
+) => {
   if (!point) return [];
 
-  return [...moodProfiles]
+  return [...profiles]
     .map((profile) => ({
       id: profile.id,
       score: 1 - Math.hypot(point.x - profile.x, point.y - profile.y) / 2.5,
     }))
-    .filter((item) => allDefinedMoodSet.has(item.id.trim().toLowerCase()))
+    .filter((item) => allowed.has(item.id.trim().toLowerCase()))
     .filter((item) => item.score > 0.2)
     .sort((left, right) => right.score - left.score)
-    .slice(0, 10);
+    .slice(0, limit);
 };
+
+const getMoodRecommendations = (point: PositioningPoint | null) =>
+  getPositionedRecommendations(point, moodProfiles, allDefinedMoodSet);
+
+const getStylingRecommendations = (point: PositioningPoint | null) =>
+  getPositionedRecommendations(point, stylingProfiles, allDefinedStylingSet, 6);
 
 const getStrongMoodRecommendations = (recommendations: { id: string; score: number }[]) =>
   recommendations.slice(0, Math.min(5, recommendations.length)).map((item) => item.id);
+
+const getStrongStylingRecommendations = (recommendations: { id: string; score: number }[]) =>
+  recommendations.slice(0, Math.min(3, recommendations.length)).map((item) => item.id);
 
 const mergePrompt = (input: unknown): VisualPrompt => {
   const next = deepClone(EMPTY_PROMPT);
@@ -140,9 +171,21 @@ const mergePrompt = (input: unknown): VisualPrompt => {
 
   merged.prompt_type = "structured_visual_prompt";
   merged.concept.mood = Array.isArray(merged.concept.mood) ? sanitizeMoodValues(merged.concept.mood) : [];
-  merged.object.details = Array.isArray(merged.object.details)
-    ? sanitizeOptionValues(merged.object.details, allDefinedObjectDetailSet)
+  const rawObjectDetails = Array.isArray(merged.object.details)
+    ? merged.object.details.filter((item): item is string => typeof item === "string")
     : [];
+  merged.concept.styling = sanitizeStylingValues([
+    ...(Array.isArray(merged.concept.styling) ? merged.concept.styling : []),
+    ...rawObjectDetails.filter((item) => allDefinedStylingSet.has(item.trim().toLowerCase())),
+  ]);
+  merged.object.material = sanitizeOptionValues(
+    [
+      ...(Array.isArray(merged.object.material) ? merged.object.material : []),
+      ...rawObjectDetails.filter((item) => allDefinedObjectMaterialSet.has(item.trim().toLowerCase())),
+    ],
+    allDefinedObjectMaterialSet
+  );
+  merged.object.details = sanitizeOptionValues(rawObjectDetails, allDefinedObjectDetailSet);
   const legacyTexture = source.texture as
     | {
         surface?: unknown;
@@ -256,6 +299,10 @@ export default function App() {
     () => getMoodRecommendations(selectedPositioningPoint),
     [selectedPositioningPoint]
   );
+  const stylingRecommendations = useMemo(
+    () => getStylingRecommendations(selectedPositioningPoint),
+    [selectedPositioningPoint]
+  );
   const filteredMoodGroups = useMemo(() => {
     const filtered = moodRecommendations.map((item) => item.id);
     const allMoodsSorted = [...chipOptions.concept.mood.brand_personality].sort((left, right) =>
@@ -267,9 +314,22 @@ export default function App() {
       "all moods": allMoodsSorted,
     };
   }, [moodRecommendations]);
+  const filteredStylingGroups = useMemo(() => {
+    const filtered = stylingRecommendations.map((item) => item.id);
+    const allStylingSorted = [...chipOptions.concept.styling].sort((left, right) => left.localeCompare(right));
+
+    return {
+      suggested: filtered,
+      "all styling": allStylingSorted,
+    };
+  }, [stylingRecommendations]);
 
   const handleMoodChange = (value: string[]) => {
     patchNestedSection("concept", "mood", value);
+  };
+
+  const handleStylingChange = (value: string[]) => {
+    patchNestedSection("concept", "styling", value);
   };
 
   useEffect(() => {
@@ -289,20 +349,26 @@ export default function App() {
         concept: {
           ...current.concept,
           mood: [],
+          styling: [],
         },
       }));
       return;
     }
 
     const stronglyRecommended = getStrongMoodRecommendations(moodRecommendations);
+    const stronglyRecommendedStyling = getStrongStylingRecommendations(stylingRecommendations);
 
     setPrompt((current) => {
       const nextMood = stronglyRecommended;
-      const unchanged =
+      const nextStyling = stronglyRecommendedStyling;
+      const moodUnchanged =
         nextMood.length === current.concept.mood.length &&
         nextMood.every((item, index) => item === current.concept.mood[index]);
+      const stylingUnchanged =
+        nextStyling.length === current.concept.styling.length &&
+        nextStyling.every((item, index) => item === current.concept.styling[index]);
 
-      if (unchanged) {
+      if (moodUnchanged && stylingUnchanged) {
         return current;
       }
 
@@ -311,10 +377,11 @@ export default function App() {
         concept: {
           ...current.concept,
           mood: nextMood,
+          styling: nextStyling,
         },
       };
     });
-  }, [moodRecommendations, selectedPositioningPoint]);
+  }, [moodRecommendations, selectedPositioningPoint, stylingRecommendations]);
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
@@ -350,11 +417,16 @@ export default function App() {
       selectedPositioningPoint && moodRecommendations.length > 0
         ? getStrongMoodRecommendations(moodRecommendations)
         : sanitizeMoodValues(rawPreset.concept.mood);
+    const nextStyling =
+      selectedPositioningPoint && stylingRecommendations.length > 0
+        ? getStrongStylingRecommendations(stylingRecommendations)
+        : sanitizeStylingValues(rawPreset.concept.styling);
     const nextPrompt = {
       ...rawPreset,
       concept: {
         ...rawPreset.concept,
         mood: nextMood,
+        styling: nextStyling,
       },
     };
     setSelectedPreset(presetName);
@@ -437,6 +509,18 @@ export default function App() {
                 : "포지셔닝을 먼저 고르거나 무드를 직접 추가해보세요"
             }
           />
+          <GroupedChipSelector
+            label="Styling"
+            selected={prompt.concept.styling}
+            groups={filteredStylingGroups}
+            onChange={handleStylingChange}
+            collapsibleGroups={["all styling"]}
+            placeholder={
+              selectedPositioningPoint
+                ? "현재 포지셔닝에 어울리는 스타일링을 직접 추가해보세요"
+                : "포지셔닝을 먼저 고르거나 스타일링을 직접 추가해보세요"
+            }
+          />
         </div>
       ),
     },
@@ -464,6 +548,12 @@ export default function App() {
             groups={chipOptions.object.details}
             onChange={(value) => patchNestedSection("object", "details", value)}
             placeholder="커스텀 디테일을 입력하고 Enter를 누르세요"
+          />
+          <ChipSelector
+            label="Material"
+            selected={prompt.object.material}
+            options={chipOptions.object.material}
+            onChange={(value) => patchNestedSection("object", "material", value)}
           />
           <ChipSelector
             label="Surface"

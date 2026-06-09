@@ -6,9 +6,12 @@ const hasItems = (items: string[]) => items.some((item) => item.trim().length > 
 export const calculateQualityScore = (prompt: VisualPrompt): number => {
   let score = 0;
 
-  if (hasText(prompt.concept.title, prompt.concept.description) || hasItems(prompt.concept.mood)) score += 10;
+  if (hasText(prompt.concept.title, prompt.concept.description) || hasItems(prompt.concept.mood) || hasItems(prompt.concept.styling)) {
+    score += 10;
+  }
   if (
     hasText(prompt.object.main_object, prompt.object.shape) ||
+    hasItems(prompt.object.material) ||
     hasItems(prompt.object.details) ||
     hasItems(prompt.object.surface) ||
     prompt.object.inside_objects.length > 0

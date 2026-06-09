@@ -13,18 +13,16 @@ export const presets: Record<string, VisualPrompt> = {
       title: "Premium Branding Package",
       description: "A glossy semi-transparent black pouch containing playful 3D brand objects",
       mood: ["modern", "premium", "playful", "bold", "graphic"],
+      styling: ["campaign key visual", "premium packshot"],
     },
     object: {
       main_object: "glossy black semi-transparent plastic pouch",
       shape: "vertical rectangular pouch with heat-sealed edges",
       details: [
-        "glossy black plastic",
-        "semi-transparent vinyl",
         "heat-sealed edges",
         "hanger hole",
-        "layered 3D objects",
-        "premium product mockup",
       ],
+      material: ["glossy black plastic", "semi-transparent vinyl"],
       surface: ["glossy plastic film", "wrinkled vinyl texture"],
       inside_objects: [
         {
@@ -94,6 +92,7 @@ export const presets: Record<string, VisualPrompt> = {
       title: "Modern Receipt Printer",
       description: "A minimal premium receipt printer designed like a modern POS device",
       mood: ["modern", "premium", "minimal", "clean", "elegant"],
+      styling: ["sculptural minimalism", "premium packshot"],
     },
     object: {
       main_object: "modern minimalist receipt printer",
@@ -101,9 +100,8 @@ export const presets: Record<string, VisualPrompt> = {
       details: [
         "compact rectangular body",
         "rounded corners",
-        "minimal industrial device",
-        "premium product mockup",
       ],
+      material: [],
       surface: [
         "matte ceramic surface",
         "sandblasted aluminum texture",
@@ -171,11 +169,13 @@ export const presets: Record<string, VisualPrompt> = {
       title: "Modern Cosmetic Product",
       description: "A premium skincare or cosmetic product with clean editorial styling",
       mood: ["modern", "premium", "elegant", "minimal", "refined"],
+      styling: ["premium packshot", "luxury beauty campaign"],
     },
     object: {
       main_object: "premium cosmetic bottle and cap",
       shape: "slim cylindrical bottle with rounded cap",
-      details: ["premium product mockup", "rounded corners", "layered 3D objects"],
+      details: ["rounded corners"],
+      material: [],
       surface: ["matte ceramic surface", "soft-touch plastic", "transparent acrylic"],
       inside_objects: [],
     },
@@ -237,6 +237,7 @@ export const presets: Record<string, VisualPrompt> = {
       title: "Premium Tech Device",
       description: "A sleek futuristic consumer technology device in a clean studio environment",
       mood: ["modern", "premium", "futuristic", "minimal", "technical"],
+      styling: ["sculptural minimalism", "premium packshot", "tech launch"],
     },
     object: {
       main_object: "sleek compact tech device",
@@ -244,9 +245,8 @@ export const presets: Record<string, VisualPrompt> = {
       details: [
         "compact rectangular body",
         "rounded corners",
-        "minimal industrial device",
-        "premium product mockup",
       ],
+      material: [],
       surface: [
         "sandblasted aluminum texture",
         "soft-touch plastic",
@@ -312,11 +312,13 @@ export const presets: Record<string, VisualPrompt> = {
       title: "Editorial Graphic Object",
       description: "A bold object-based editorial composition with graphic forms and strong lighting",
       mood: ["bold", "dramatic", "artful", "modern", "playful"],
+      styling: ["campaign key visual", "graphic image-making", "editorial still life"],
     },
     object: {
       main_object: "abstract editorial object arrangement",
       shape: "layered sculptural composition with geometric forms",
-      details: ["layered 3D objects", "playful graphic objects", "premium product mockup"],
+      details: [],
+      material: [],
       surface: ["transparent acrylic"],
       inside_objects: [
         {
@@ -388,11 +390,13 @@ export const presets: Record<string, VisualPrompt> = {
       title: "Luxury Perfume Bottle",
       description: "A refined fragrance bottle photographed like a premium beauty campaign visual",
       mood: ["luxurious", "premium", "elegant", "sophisticated", "artful"],
+      styling: ["premium packshot", "editorial still life", "luxury beauty campaign"],
     },
     object: {
       main_object: "faceted perfume bottle with sculpted cap",
       shape: "compact glass bottle with beveled shoulders and a weighted cap",
-      details: ["frosted glass", "precision seam lines", "premium product mockup", "editorial sculptural accent"],
+      details: ["precision seam lines"],
+      material: ["frosted glass"],
       surface: ["transparent acrylic", "matte ceramic surface"],
       inside_objects: [],
     },
@@ -440,11 +444,13 @@ export const presets: Record<string, VisualPrompt> = {
       title: "Sneaker Campaign Visual",
       description: "A fashionable sneaker hero image with bold retail energy and product-first composition",
       mood: ["bold", "sporty", "energetic", "modern", "playful"],
+      styling: ["graphic image-making", "premium packshot", "sport performance"],
     },
     object: {
       main_object: "premium fashion sneaker",
       shape: "dynamic low-top silhouette with layered panels",
-      details: ["stacked modular form", "soft-touch polymer", "playful graphic objects", "premium product mockup"],
+      details: ["stacked modular form"],
+      material: ["soft-touch polymer"],
       surface: ["soft-touch plastic"],
       inside_objects: [],
     },
@@ -492,11 +498,13 @@ export const presets: Record<string, VisualPrompt> = {
       title: "Premium Beverage Can",
       description: "A chilled beverage can visualized as a sharp branding mockup with strong shelf appeal",
       mood: ["bold", "premium", "modern", "vibrant", "graphic"],
+      styling: ["premium packshot", "retail shelf impact"],
     },
     object: {
       main_object: "sleek aluminum beverage can",
       shape: "tall cylindrical can with clean rim detailing",
-      details: ["slim cylindrical silhouette", "brushed aluminum", "precision seam lines", "premium product mockup"],
+      details: ["slim cylindrical silhouette", "precision seam lines"],
+      material: ["brushed aluminum"],
       surface: ["sandblasted aluminum texture", "fingerprint-resistant coating"],
       inside_objects: [],
     },
@@ -544,11 +552,13 @@ export const presets: Record<string, VisualPrompt> = {
       title: "Furniture Catalog Hero",
       description: "A modern furniture product image for a quiet premium catalog layout",
       mood: ["minimal", "calm", "premium", "elegant", "grounded"],
+      styling: ["sculptural minimalism", "editorial still life", "gallery display"],
     },
     object: {
       main_object: "designer accent chair",
       shape: "soft curved chair form with a grounded sculptural base",
-      details: ["rounded corners", "frosted glass", "minimal industrial device", "editorial sculptural accent"],
+      details: ["rounded corners"],
+      material: ["frosted glass"],
       surface: ["matte ceramic surface", "soft-touch plastic"],
       inside_objects: [],
     },
@@ -596,11 +606,13 @@ export const presets: Record<string, VisualPrompt> = {
       title: "Gadget Flat Lay",
       description: "A contemporary desk setup composition showing consumer gadgets with crisp organization",
       mood: ["modern", "minimal", "technical", "sophisticated", "futuristic"],
+      styling: ["premium packshot", "tech launch"],
     },
     object: {
       main_object: "curated consumer tech flat lay",
       shape: "stacked modular form arranged in a clean top-down system",
-      details: ["thin beveled edge body", "brushed aluminum", "flush button integration", "premium product mockup"],
+      details: ["thin beveled edge body", "flush button integration"],
+      material: ["brushed aluminum"],
       surface: ["sandblasted aluminum texture", "fingerprint-resistant coating"],
       inside_objects: [
         {

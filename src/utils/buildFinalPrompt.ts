@@ -27,6 +27,10 @@ export const buildFinalPrompt = (prompt: VisualPrompt): string => {
     parts.push(`Mood: ${joinList(prompt.concept.mood)}.`);
   }
 
+  if (prompt.concept.styling.length > 0) {
+    parts.push(`Styling: ${joinList(prompt.concept.styling)}.`);
+  }
+
   const objectLead = [
     prompt.object.main_object,
     prompt.object.shape ? `with ${prompt.object.shape}` : "",
@@ -39,6 +43,10 @@ export const buildFinalPrompt = (prompt: VisualPrompt): string => {
 
   if (prompt.object.details.length > 0) {
     parts.push(`Object details: ${joinList(prompt.object.details)}.`);
+  }
+
+  if (prompt.object.material.length > 0) {
+    parts.push(`Material: ${joinList(prompt.object.material)}.`);
   }
 
   if (prompt.object.surface.length > 0) {

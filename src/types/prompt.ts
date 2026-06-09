@@ -10,10 +10,12 @@ export interface VisualPrompt {
     title: string;
     description: string;
     mood: string[];
+    styling: string[];
   };
   object: {
     main_object: string;
     shape: string;
+    material: string[];
     details: string[];
     surface: string[];
     inside_objects: InsideObject[];
@@ -64,10 +66,12 @@ export const EMPTY_PROMPT: VisualPrompt = {
     title: "",
     description: "",
     mood: [],
+    styling: [],
   },
   object: {
     main_object: "",
     shape: "",
+    material: [],
     details: [],
     surface: [],
     inside_objects: [],
