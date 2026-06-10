@@ -1,4 +1,4 @@
-import { presetNames } from "../data/presets";
+import { presetLabels, presetNames } from "../data/presets";
 
 interface PresetSelectorProps {
   value: string;
@@ -16,7 +16,7 @@ export default function PresetSelector({ value, onChange }: PresetSelectorProps)
       >
         {presetNames.map((presetName) => (
           <option key={presetName} value={presetName}>
-            {presetName}
+            {presetLabels[presetName] ?? presetName}
           </option>
         ))}
       </select>

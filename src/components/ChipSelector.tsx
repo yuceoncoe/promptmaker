@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { getChipLabel } from "../data/chipLabels";
 
 interface ChipSelectorProps {
   label: string;
@@ -7,6 +8,7 @@ interface ChipSelectorProps {
   onChange: (value: string[]) => void;
   placeholder?: string;
   allowCustom?: boolean;
+  includeSelectedInOptions?: boolean;
 }
 
 const normalize = (value: string) => value.trim();
@@ -18,13 +20,15 @@ export default function ChipSelector({
   onChange,
   placeholder = "Add a custom value and press Enter",
   allowCustom = true,
+  includeSelectedInOptions = true,
 }: ChipSelectorProps) {
   const [draft, setDraft] = useState("");
 
   const allOptions = useMemo(() => {
-    const set = new Set([...options, ...selected].map(normalize).filter(Boolean));
+    const source = includeSelectedInOptions ? [...options, ...selected] : [...options];
+    const set = new Set(source.map(normalize).filter(Boolean));
     return Array.from(set);
-  }, [options, selected]);
+  }, [includeSelectedInOptions, options, selected]);
 
   const toggleChip = (value: string) => {
     const normalized = normalize(value);
@@ -68,7 +72,7 @@ export default function ChipSelector({
                   : "border-stone-200 bg-stone-100 text-stone-700 hover:bg-stone-200",
               ].join(" ")}
             >
-              {option}
+              {getChipLabel(option)}
             </button>
           );
         })}

@@ -6,23 +6,20 @@ const hasItems = (items: string[]) => items.some((item) => item.trim().length > 
 export const calculateQualityScore = (prompt: VisualPrompt): number => {
   let score = 0;
 
-  if (hasText(prompt.concept.title, prompt.concept.description) || hasItems(prompt.concept.mood) || hasItems(prompt.concept.styling)) {
+  if (hasItems(prompt.concept.mood) || hasItems(prompt.concept.styling)) {
     score += 10;
   }
   if (
     hasText(prompt.object.main_object, prompt.object.shape) ||
     hasItems(prompt.object.material) ||
     hasItems(prompt.object.details) ||
-    hasItems(prompt.object.surface) ||
+    hasItems(prompt.object.texture) ||
     prompt.object.inside_objects.length > 0
   ) score += 20;
   if (
     hasText(
       prompt.composition.view,
-      prompt.composition.angle,
-      prompt.composition.placement,
       prompt.composition.framing,
-      prompt.composition.balance,
       prompt.composition.depth
     ) || hasItems(prompt.composition.layout)
   ) score += 15;
@@ -31,9 +28,7 @@ export const calculateQualityScore = (prompt: VisualPrompt): number => {
       prompt.lighting.main_light,
       prompt.lighting.highlight,
       prompt.lighting.glow,
-      prompt.lighting.shadow,
-      prompt.lighting.mood,
-      prompt.lighting.rendering_style
+      prompt.lighting.shadow
     )
   ) score += 15;
   if (hasText(prompt.background.color, prompt.background.style, prompt.background.surface, prompt.background.purpose)) score += 10;

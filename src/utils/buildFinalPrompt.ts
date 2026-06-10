@@ -4,6 +4,63 @@ const nonEmpty = (value: string) => value.trim().length > 0;
 
 const joinList = (items: string[]) => items.filter(nonEmpty).join(", ");
 
+const promptViewMap: Record<string, string> = {
+  "front view": "front view",
+  "rear view": "rear view",
+  "left profile view": "left profile view",
+  "right profile view": "right profile view",
+  "top view": "top view",
+  "three-quarter front left view": "three-quarter front left view",
+  "three-quarter front right view": "three-quarter front right view",
+  "three-quarter rear left view": "three-quarter rear left view",
+  "three-quarter rear right view": "three-quarter rear right view",
+  "high-angle front view": "high-angle front view",
+  "high-angle three-quarter left view": "high-angle three-quarter left view",
+  "high-angle three-quarter right view": "high-angle three-quarter right view",
+  "bird's-eye view": "bird's-eye view",
+  "overhead view": "overhead view",
+  "flat lay": "flat lay",
+  "low-angle front view": "low-angle front view",
+  "low-angle three-quarter left view": "low-angle three-quarter left view",
+  "low-angle three-quarter right view": "low-angle three-quarter right view",
+  "low-angle rear view": "low-angle rear view",
+  "isometric left view": "isometric view",
+  "isometric right view": "isometric view",
+  "rear isometric left view": "rear isometric left view",
+  "rear isometric right view": "rear isometric right view",
+  "macro close-up view": "macro close-up view",
+  "slight left-front view": "three-quarter front left view",
+  "slight right-front view": "three-quarter front right view",
+  "mid left-front view": "three-quarter front left view",
+  "mid right-front view": "three-quarter front right view",
+  "three-quarter left view": "three-quarter front left view",
+  "three-quarter right view": "three-quarter front right view",
+  "side profile left view": "left profile view",
+  "side profile right view": "right profile view",
+  "back view": "rear view",
+  "top-down view": "bird's-eye view",
+  "slightly top-down back view": "high-angle front view",
+  "top-down front-left view": "bird's-eye view",
+  "top-down front-right view": "bird's-eye view",
+  "slightly top-down front view": "high-angle front view",
+  "slightly top-down front-left view": "high-angle three-quarter left view",
+  "slightly top-down front-right view": "high-angle three-quarter right view",
+  "slightly top-down left view": "high-angle three-quarter left view",
+  "slightly top-down right view": "high-angle three-quarter right view",
+  "low-angle back view": "low-angle rear view",
+  "low-angle front-left view": "low-angle three-quarter left view",
+  "low-angle front-right view": "low-angle three-quarter right view",
+  "low-angle mid-left view": "low-angle three-quarter left view",
+  "low-angle mid-right view": "low-angle three-quarter right view",
+  "low-angle left view": "low-angle three-quarter left view",
+  "low-angle right view": "low-angle three-quarter right view",
+  "isometric rear left view": "rear isometric left view",
+  "isometric rear right view": "rear isometric right view",
+  "flat lay view": "flat lay",
+};
+
+const getPromptFriendlyView = (value: string) => promptViewMap[value] ?? value;
+
 const insideObjectSummary = (items: InsideObject[]) => {
   const summaries = items
     .map((item) => [item.description || item.name, item.material ? `made of ${item.material}` : ""].filter(nonEmpty).join(", "))
@@ -13,15 +70,11 @@ const insideObjectSummary = (items: InsideObject[]) => {
     return "";
   }
 
-  return `Inside the main object, include ${summaries.join("; ")}.`;
+  return `Include supporting subject details such as ${summaries.join("; ")}.`;
 };
 
 export const buildFinalPrompt = (prompt: VisualPrompt): string => {
   const parts: string[] = [];
-  const conceptLead = [prompt.concept.title, prompt.concept.description].filter(nonEmpty).join(": ");
-  if (conceptLead) {
-    parts.push(conceptLead.endsWith(".") ? conceptLead : `${conceptLead}.`);
-  }
 
   if (prompt.concept.mood.length > 0) {
     parts.push(`Mood: ${joinList(prompt.concept.mood)}.`);
@@ -38,19 +91,19 @@ export const buildFinalPrompt = (prompt: VisualPrompt): string => {
     .filter(nonEmpty)
     .join(" ");
   if (objectLead) {
-    parts.push(`Feature ${objectLead}.`);
+    parts.push(`Primary subject: ${objectLead}.`);
   }
 
   if (prompt.object.details.length > 0) {
-    parts.push(`Object details: ${joinList(prompt.object.details)}.`);
+    parts.push(`Subject details: ${joinList(prompt.object.details)}.`);
   }
 
   if (prompt.object.material.length > 0) {
     parts.push(`Material: ${joinList(prompt.object.material)}.`);
   }
 
-  if (prompt.object.surface.length > 0) {
-    parts.push(`Surface: ${joinList(prompt.object.surface)}.`);
+  if (prompt.object.texture.length > 0) {
+    parts.push(`Surface finish: ${joinList(prompt.object.texture)}.`);
   }
 
   const insideObjects = insideObjectSummary(prompt.object.inside_objects);
@@ -59,12 +112,9 @@ export const buildFinalPrompt = (prompt: VisualPrompt): string => {
   }
 
   const compositionParts = [
-    prompt.composition.view,
-    prompt.composition.angle,
-    prompt.composition.placement,
+    getPromptFriendlyView(prompt.composition.view),
     prompt.composition.framing,
     joinList(prompt.composition.layout),
-    prompt.composition.balance,
     prompt.composition.depth,
   ].filter(nonEmpty);
   if (compositionParts.length > 0) {
@@ -76,11 +126,9 @@ export const buildFinalPrompt = (prompt: VisualPrompt): string => {
     prompt.lighting.highlight,
     prompt.lighting.glow,
     prompt.lighting.shadow,
-    prompt.lighting.mood,
-    prompt.lighting.rendering_style,
   ].filter(nonEmpty);
   if (lightingParts.length > 0) {
-    parts.push(`Lighting and rendering: ${lightingParts.join(", ")}.`);
+    parts.push(`Lighting: ${lightingParts.join(", ")}.`);
   }
 
   const backgroundParts = [

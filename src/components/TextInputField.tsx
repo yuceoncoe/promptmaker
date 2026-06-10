@@ -1,3 +1,5 @@
+import { getChipLabel } from "../data/chipLabels";
+
 interface TextInputFieldProps {
   label: string;
   value: string;
@@ -47,7 +49,7 @@ export default function TextInputField({
               <button
                 key={suggestion}
                 type="button"
-                onClick={() => onChange(suggestion)}
+                onClick={() => onChange(active ? "" : suggestion)}
                 className={[
                   "rounded-full border px-3 py-1.5 text-sm transition",
                   active
@@ -55,7 +57,7 @@ export default function TextInputField({
                     : "border-stone-200 bg-stone-100 text-stone-700 hover:bg-stone-200",
                 ].join(" ")}
               >
-                {suggestion}
+                {getChipLabel(suggestion)}
               </button>
             );
           })}

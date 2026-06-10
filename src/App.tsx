@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import AccordionSection from "./components/AccordionSection";
+import CameraViewPicker from "./components/CameraViewPicker";
 import ChipSelector from "./components/ChipSelector";
 import GroupedChipSelector from "./components/GroupedChipSelector";
 import NestedObjectList from "./components/NestedObjectList";
@@ -9,7 +10,7 @@ import ResultPanel from "./components/ResultPanel";
 import TextInputField from "./components/TextInputField";
 import Toast from "./components/Toast";
 import { chipOptions, legacyPositioningPointMap, moodProfiles, positioningMap, stylingProfiles } from "./data/chipOptions";
-import { presets } from "./data/presets";
+import { presetLabels, presets } from "./data/presets";
 import { EMPTY_PROMPT, type VisualPrompt } from "./types/prompt";
 import { buildFinalPrompt } from "./utils/buildFinalPrompt";
 import { calculateQualityScore } from "./utils/calculateQualityScore";
@@ -34,20 +35,15 @@ const allDefinedMoodSet = createOptionSet(chipOptions.concept.mood.brand_persona
 const allDefinedStylingSet = createOptionSet(chipOptions.concept.styling);
 const allDefinedObjectMaterialSet = createOptionSet(chipOptions.object.material);
 const allDefinedObjectDetailSet = createOptionSet(chipOptions.object.details);
-const objectSurfaceSet = createOptionSet(chipOptions.object.surface);
+const objectTextureSet = createOptionSet(chipOptions.object.texture);
 const compositionViewSet = createOptionSet(chipOptions.composition.view);
-const compositionAngleSet = createOptionSet(chipOptions.composition.angle);
-const compositionPlacementSet = createOptionSet(chipOptions.composition.placement);
 const compositionFramingSet = createOptionSet(chipOptions.composition.framing);
 const compositionLayoutSet = createOptionSet(chipOptions.composition.layout);
-const compositionBalanceSet = createOptionSet(chipOptions.composition.balance);
 const compositionDepthSet = createOptionSet(chipOptions.composition.depth);
 const lightingMainLightSet = createOptionSet(chipOptions.lighting.main_light);
 const lightingHighlightSet = createOptionSet(chipOptions.lighting.highlight);
 const lightingGlowSet = createOptionSet(chipOptions.lighting.glow);
 const lightingShadowSet = createOptionSet(chipOptions.lighting.shadow);
-const lightingMoodSet = createOptionSet(chipOptions.lighting.mood);
-const lightingRenderingStyleSet = createOptionSet(chipOptions.lighting.rendering_style);
 const backgroundColorSet = createOptionSet(chipOptions.background.color);
 const backgroundStyleSet = createOptionSet(chipOptions.background.style);
 const backgroundSurfaceSet = createOptionSet(chipOptions.background.surface);
@@ -77,14 +73,149 @@ const invalidLegacyMoodSet = new Set<string>([
 const legacyStylingAliasMap: Record<string, string> = {
   "layered object styling": "campaign key visual",
   "premium product styling": "premium packshot",
-  "playful graphic styling": "graphic image-making",
-  "minimal industrial styling": "sculptural minimalism",
+  "playful graphic styling": "pop art",
+  "minimal industrial styling": "dieter rams style",
   "editorial sculptural styling": "editorial still life",
-  "luxury beauty styling": "luxury beauty campaign",
-  "sport-driven styling": "sport performance",
-  "retail-ready styling": "retail shelf impact",
+  "luxury beauty styling": "quiet luxury",
+  "sport-driven styling": "fashion campaign object",
+  "retail-ready styling": "high-end e-commerce photography",
   "gallery display styling": "gallery display",
-  "technical product styling": "tech launch",
+  "technical product styling": "apple-style keynote render",
+  "graphic image-making": "graphic poster aesthetic",
+  "retail shelf impact": "high-end e-commerce photography",
+  "luxury beauty campaign": "quiet luxury",
+  "sport performance": "fashion campaign object",
+  "youth culture": "y2k aesthetic",
+  "tech launch": "apple-style keynote render",
+  "design-forward catalog": "catalog minimal",
+  "playful brand world": "glossy acrylic pop",
+  "sculptural minimalism": "soft modernism",
+  "collector appeal": "archival quality finish",
+};
+const legacyObjectMaterialAliasMap: Record<string, string[]> = {
+  aluminum: ["aluminum"],
+  "brushed aluminum": ["aluminum"],
+  "anodized aluminum": ["aluminum"],
+  plastic: ["plastic"],
+  "glossy black plastic": ["plastic"],
+  "soft-touch polymer": ["plastic"],
+  "satin polymer": ["plastic"],
+  acrylic: ["acrylic"],
+  glass: ["glass"],
+  "frosted glass": ["glass"],
+  ceramic: ["ceramic"],
+  "coated paperboard": ["paperboard"],
+  "cardboard / paperboard": ["paperboard"],
+  paperboard: ["paperboard"],
+  vinyl: ["vinyl"],
+  "semi-transparent vinyl": ["vinyl"],
+  "vinyl / polymer": ["vinyl"],
+  "powder-coated metal": ["steel"],
+  steel: ["steel"],
+  foil: ["foil"],
+};
+const legacyObjectTextureAliasMap: Record<string, string[]> = {
+  "glossy plastic film": ["high-gloss"],
+  "high-gloss": ["high-gloss"],
+  matte: ["matte"],
+  "matte ceramic surface": ["matte"],
+  brushed: ["brushed"],
+  "fine brushed grain": ["brushed"],
+  sandblasted: ["sandblasted"],
+  "sandblasted aluminum texture": ["sandblasted"],
+  frosted: ["frosted"],
+  ribbed: ["ribbed"],
+  "ribbed translucent plastic": ["ribbed"],
+  "soft-touch": ["soft-touch"],
+  "soft-touch plastic": ["soft-touch"],
+  wrinkled: ["wrinkled"],
+  "wrinkled vinyl texture": ["wrinkled"],
+  embossed: ["embossed"],
+  "transparent acrylic": ["high-gloss"],
+  "translucent paper": ["matte"],
+  "fingerprint-resistant coating": ["matte"],
+  "powder-coated finish": ["matte"],
+  "coated cardboard texture": ["matte"],
+  "satin lacquer finish": ["high-gloss"],
+};
+const legacyObjectDetailAliasMap: Record<string, string[]> = {
+  "faceted sculptural silhouette": ["gem-cut faceted edges"],
+  "thin beveled edge body": ["chamfered edges"],
+  "soft curved monoblock form": ["seamless monoblock form"],
+  "rounded capsule-like consumer device shape": ["pill-shaped contour"],
+};
+const legacyCompositionViewAliasMap: Record<string, string> = {
+  "front-facing product shot": "front view",
+  "centered composition": "front view",
+  "straight-on angle": "front view",
+  "eye-level angle": "front view",
+  "3/4 front view": "three-quarter front right view",
+  "slightly elevated angle": "high-angle three-quarter right view",
+  "side profile product shot": "right profile view",
+  "top-down angle": "bird's-eye view",
+  "overhead angle": "overhead view",
+  "slightly top-down angle": "high-angle front view",
+  "dramatic low angle": "low-angle front view",
+  "isometric product view": "isometric right view",
+  "close-up product shot": "macro close-up view",
+  "macro detail crop": "macro close-up view",
+  "close macro angle": "macro close-up view",
+  "flat lay arrangement": "flat lay",
+  "tilted perspective angle": "three-quarter front right view",
+  "three-quarter front view": "three-quarter front right view",
+  "slightly top-down view": "high-angle three-quarter right view",
+  "low-angle view": "low-angle three-quarter right view",
+  "isometric view": "isometric right view",
+  "side profile view": "right profile view",
+  "slight left-front view": "three-quarter front left view",
+  "slight right-front view": "three-quarter front right view",
+  "mid left-front view": "three-quarter front left view",
+  "mid right-front view": "three-quarter front right view",
+  "three-quarter left view": "three-quarter front left view",
+  "three-quarter right view": "three-quarter front right view",
+  "side profile left view": "left profile view",
+  "side profile right view": "right profile view",
+  "back view": "rear view",
+  "top-down view": "bird's-eye view",
+  "slightly top-down back view": "high-angle front view",
+  "top-down front-left view": "bird's-eye view",
+  "top-down front-right view": "bird's-eye view",
+  "slightly top-down front view": "high-angle front view",
+  "slightly top-down front-left view": "high-angle three-quarter left view",
+  "slightly top-down front-right view": "high-angle three-quarter right view",
+  "slightly top-down left view": "high-angle three-quarter left view",
+  "slightly top-down right view": "high-angle three-quarter right view",
+  "low-angle back view": "low-angle rear view",
+  "low-angle front-left view": "low-angle three-quarter left view",
+  "low-angle front-right view": "low-angle three-quarter right view",
+  "low-angle mid-left view": "low-angle three-quarter left view",
+  "low-angle mid-right view": "low-angle three-quarter right view",
+  "low-angle left view": "low-angle three-quarter left view",
+  "low-angle right view": "low-angle three-quarter right view",
+  "isometric rear left view": "rear isometric left view",
+  "isometric rear right view": "rear isometric right view",
+  "flat lay view": "flat lay",
+};
+const legacyCompositionLayoutAliasMap: Record<string, string[]> = {
+  "centered in frame": ["centered hero composition"],
+  "floating object": ["floating object composition"],
+  "placed on clean desk": ["object-focused layout"],
+  "product fills most of the frame": ["full-frame product emphasis"],
+  "anchored near lower third": ["lower-third anchored composition"],
+  "offset to one side": ["off-center composition"],
+  "presented as hero object": ["centered hero composition"],
+  "arranged in a structured grid": ["structured grid layout"],
+  "asymmetric but balanced layout": ["asymmetrical composition"],
+  "graphic poster-like arrangement": ["graphic poster arrangement"],
+  "grid-based product layout": ["structured grid layout"],
+  "catalog-style arrangement": ["catalog arrangement"],
+  "museum-display composition": ["museum display composition"],
+  "symmetrical balance": ["symmetrical composition"],
+  "asymmetric balance": ["asymmetrical composition"],
+  "editorial balance": ["editorial composition"],
+  "dynamic balance": ["dynamic composition"],
+  "modular grid balance": ["structured grid layout"],
+  "weighted off-center balance": ["off-center composition"],
 };
 
 const sanitizeMoodValues = (values: string[]) =>
@@ -98,6 +229,9 @@ const sanitizeOptionValues = (values: string[], allowed: Set<string>) =>
 const sanitizeOptionValue = (value: string, allowed: Set<string>) => (allowed.has(value.trim().toLowerCase()) ? value : "");
 const sanitizeStylingValues = (values: string[]) =>
   sanitizeOptionValues(values.map(normalizeStylingValue), allDefinedStylingSet);
+const expandLegacyObjectValues = (values: string[], aliasMap: Record<string, string[]>) =>
+  values.flatMap((value) => aliasMap[value.trim().toLowerCase()] ?? [value]);
+const normalizeCompositionViewValue = (value: string) => legacyCompositionViewAliasMap[value.trim().toLowerCase()] ?? value;
 
 const inferPositioningPointFromMood = (values: string[]): PositioningPoint | null => {
   const legacyValue = values.find((value) => legacyPositioningSet.has(value));
@@ -136,6 +270,24 @@ const getStrongMoodRecommendations = (recommendations: { id: string; score: numb
 
 const getStrongStylingRecommendations = (recommendations: { id: string; score: number }[]) =>
   recommendations.slice(0, Math.min(3, recommendations.length)).map((item) => item.id);
+
+const inferPositioningPointFromPreset = (moodValues: string[], stylingValues: string[]): PositioningPoint | null => {
+  const moodMatches = moodProfiles.filter((profile) => moodValues.includes(profile.id));
+  const stylingMatches = stylingProfiles.filter((profile) => stylingValues.includes(profile.id));
+  const matches = [...moodMatches, ...stylingMatches];
+
+  if (matches.length === 0) {
+    return inferPositioningPointFromMood(moodValues);
+  }
+
+  const averageX = matches.reduce((sum, item) => sum + item.x, 0) / matches.length;
+  const averageY = matches.reduce((sum, item) => sum + item.y, 0) / matches.length;
+
+  return {
+    x: Number(clamp(averageX, -1, 1).toFixed(2)),
+    y: Number(clamp(averageY, -1, 1).toFixed(2)),
+  };
+};
 
 const mergePrompt = (input: unknown): VisualPrompt => {
   const next = deepClone(EMPTY_PROMPT);
@@ -179,44 +331,77 @@ const mergePrompt = (input: unknown): VisualPrompt => {
     ...rawObjectDetails.filter((item) => allDefinedStylingSet.has(item.trim().toLowerCase())),
   ]);
   merged.object.material = sanitizeOptionValues(
-    [
+    expandLegacyObjectValues(
+      [
       ...(Array.isArray(merged.object.material) ? merged.object.material : []),
       ...rawObjectDetails.filter((item) => allDefinedObjectMaterialSet.has(item.trim().toLowerCase())),
-    ],
+      ],
+      legacyObjectMaterialAliasMap
+    ),
     allDefinedObjectMaterialSet
   );
-  merged.object.details = sanitizeOptionValues(rawObjectDetails, allDefinedObjectDetailSet);
+  merged.object.details = sanitizeOptionValues(
+    expandLegacyObjectValues(rawObjectDetails, legacyObjectDetailAliasMap),
+    allDefinedObjectDetailSet
+  );
   const legacyTexture = source.texture as
     | {
         surface?: unknown;
         package_surface?: unknown;
       }
     | undefined;
-  merged.object.surface = sanitizeOptionValues(
-    [
-      ...(Array.isArray(merged.object.surface) ? merged.object.surface : []),
-      ...(Array.isArray(legacyTexture?.surface) ? legacyTexture.surface.filter((item): item is string => typeof item === "string") : []),
-      ...(Array.isArray(legacyTexture?.package_surface)
-        ? legacyTexture.package_surface.filter((item): item is string => typeof item === "string")
-        : []),
-    ],
-    objectSurfaceSet
-  );
-  merged.composition.view = sanitizeOptionValue(merged.composition.view, compositionViewSet);
-  merged.composition.angle = sanitizeOptionValue(merged.composition.angle, compositionAngleSet);
-  merged.composition.placement = sanitizeOptionValue(merged.composition.placement, compositionPlacementSet);
-  merged.composition.framing = sanitizeOptionValue(merged.composition.framing, compositionFramingSet);
-  merged.composition.layout = Array.isArray(merged.composition.layout)
-    ? sanitizeOptionValues(merged.composition.layout, compositionLayoutSet)
+  const rawObjectTexture = Array.isArray(merged.object.texture)
+    ? merged.object.texture.filter((item): item is string => typeof item === "string")
     : [];
-  merged.composition.balance = sanitizeOptionValue(merged.composition.balance, compositionBalanceSet);
+  const legacyObjectSurface = Array.isArray((source.object as { surface?: unknown[] } | undefined)?.surface)
+    ? ((source.object as { surface?: unknown[] }).surface ?? []).filter((item): item is string => typeof item === "string")
+    : [];
+  merged.object.texture = sanitizeOptionValues(
+    expandLegacyObjectValues(
+      [
+        ...rawObjectTexture,
+        ...legacyObjectSurface,
+        ...(Array.isArray(legacyTexture?.surface) ? legacyTexture.surface.filter((item): item is string => typeof item === "string") : []),
+        ...(Array.isArray(legacyTexture?.package_surface)
+          ? legacyTexture.package_surface.filter((item): item is string => typeof item === "string")
+          : []),
+      ],
+      legacyObjectTextureAliasMap
+    ),
+    objectTextureSet
+  );
+  const legacyCompositionAngle =
+    typeof (source.composition as { angle?: unknown } | undefined)?.angle === "string"
+      ? (source.composition as { angle: string }).angle
+      : "";
+  merged.composition.view = sanitizeOptionValue(
+    normalizeCompositionViewValue(merged.composition.view) || normalizeCompositionViewValue(legacyCompositionAngle),
+    compositionViewSet
+  );
+  merged.composition.framing = sanitizeOptionValue(merged.composition.framing, compositionFramingSet);
+  const legacyCompositionPlacement =
+    typeof (source.composition as { placement?: unknown } | undefined)?.placement === "string"
+      ? (source.composition as { placement: string }).placement
+      : "";
+  const legacyCompositionBalance =
+    typeof (source.composition as { balance?: unknown } | undefined)?.balance === "string"
+      ? (source.composition as { balance: string }).balance
+      : "";
+  const rawCompositionLayout = Array.isArray(merged.composition.layout)
+    ? merged.composition.layout.filter((item): item is string => typeof item === "string")
+    : [];
+  merged.composition.layout = sanitizeOptionValues(
+    expandLegacyObjectValues(
+      [legacyCompositionPlacement, ...rawCompositionLayout, legacyCompositionBalance].filter(Boolean),
+      legacyCompositionLayoutAliasMap
+    ),
+    compositionLayoutSet
+  );
   merged.composition.depth = sanitizeOptionValue(merged.composition.depth, compositionDepthSet);
   merged.lighting.main_light = sanitizeOptionValue(merged.lighting.main_light, lightingMainLightSet);
   merged.lighting.highlight = sanitizeOptionValue(merged.lighting.highlight, lightingHighlightSet);
   merged.lighting.glow = sanitizeOptionValue(merged.lighting.glow, lightingGlowSet);
   merged.lighting.shadow = sanitizeOptionValue(merged.lighting.shadow, lightingShadowSet);
-  merged.lighting.mood = sanitizeOptionValue(merged.lighting.mood, lightingMoodSet);
-  merged.lighting.rendering_style = sanitizeOptionValue(merged.lighting.rendering_style, lightingRenderingStyleSet);
   merged.background.color = sanitizeOptionValue(merged.background.color, backgroundColorSet);
   merged.background.style = sanitizeOptionValue(merged.background.style, backgroundStyleSet);
   merged.background.surface = sanitizeOptionValue(merged.background.surface, backgroundSurfaceSet);
@@ -237,6 +422,31 @@ const mergePrompt = (input: unknown): VisualPrompt => {
   merged.text_elements.note = sanitizeOptionValue(merged.text_elements.note, textNoteSet);
   merged.style_keywords = sanitizeOptionValues(merged.style_keywords, styleKeywordSet);
   merged.negative_prompt = sanitizeOptionValues(merged.negative_prompt, negativePromptSet);
+
+  merged.concept = {
+    mood: merged.concept.mood,
+    styling: merged.concept.styling,
+  };
+  merged.object = {
+    main_object: merged.object.main_object,
+    shape: merged.object.shape,
+    material: merged.object.material,
+    details: merged.object.details,
+    texture: merged.object.texture,
+    inside_objects: merged.object.inside_objects,
+  };
+  merged.composition = {
+    view: merged.composition.view,
+    framing: merged.composition.framing,
+    layout: merged.composition.layout,
+    depth: merged.composition.depth,
+  };
+  merged.lighting = {
+    main_light: merged.lighting.main_light,
+    highlight: merged.lighting.highlight,
+    glow: merged.lighting.glow,
+    shadow: merged.lighting.shadow,
+  };
 
   return merged;
 };
@@ -267,6 +477,7 @@ export default function App() {
   });
   const [toast, setToast] = useState<ToastState>(null);
   const previousPositioningKeyRef = useRef("");
+  const skipNextPositioningSyncRef = useRef(false);
 
   useEffect(() => {
     const withFinal = { ...prompt, final_prompt: buildFinalPrompt(prompt) };
@@ -316,11 +527,16 @@ export default function App() {
   }, [moodRecommendations]);
   const filteredStylingGroups = useMemo(() => {
     const filtered = stylingRecommendations.map((item) => item.id);
-    const allStylingSorted = [...chipOptions.concept.styling].sort((left, right) => left.localeCompare(right));
+    const groupedStyling = Object.fromEntries(
+      Object.entries(chipOptions.concept.styling).map(([groupName, options]) => [
+        groupName,
+        [...options].sort((left, right) => left.localeCompare(right)),
+      ])
+    );
 
     return {
       suggested: filtered,
-      "all styling": allStylingSorted,
+      ...groupedStyling,
     };
   }, [stylingRecommendations]);
 
@@ -342,6 +558,11 @@ export default function App() {
     }
 
     previousPositioningKeyRef.current = positioningKey;
+
+    if (skipNextPositioningSyncRef.current) {
+      skipNextPositioningSyncRef.current = false;
+      return;
+    }
 
     if (!selectedPositioningPoint || moodRecommendations.length === 0) {
       setPrompt((current) => ({
@@ -413,25 +634,32 @@ export default function App() {
 
   const applyPreset = (presetName: string) => {
     const rawPreset = deepClone(presets[presetName] ?? EMPTY_PROMPT);
-    const nextMood =
-      selectedPositioningPoint && moodRecommendations.length > 0
-        ? getStrongMoodRecommendations(moodRecommendations)
-        : sanitizeMoodValues(rawPreset.concept.mood);
-    const nextStyling =
-      selectedPositioningPoint && stylingRecommendations.length > 0
-        ? getStrongStylingRecommendations(stylingRecommendations)
-        : sanitizeStylingValues(rawPreset.concept.styling);
-    const nextPrompt = {
-      ...rawPreset,
+    const nextMood = sanitizeMoodValues(rawPreset.concept.mood);
+    const nextStyling = sanitizeStylingValues(rawPreset.concept.styling);
+    const nextPositioningPoint = inferPositioningPointFromPreset(nextMood, nextStyling);
+    const nextPrompt: VisualPrompt = {
+      ...prompt,
+      composition: rawPreset.composition,
+      lighting: rawPreset.lighting,
+      background: rawPreset.background,
+      color_palette: rawPreset.color_palette,
+      text_elements: rawPreset.text_elements,
+      style_keywords: rawPreset.style_keywords,
+      negative_prompt: rawPreset.negative_prompt,
       concept: {
-        ...rawPreset.concept,
+        ...prompt.concept,
         mood: nextMood,
         styling: nextStyling,
       },
     };
+    skipNextPositioningSyncRef.current = true;
+    previousPositioningKeyRef.current = nextPositioningPoint
+      ? `${nextPositioningPoint.x.toFixed(2)}:${nextPositioningPoint.y.toFixed(2)}`
+      : "";
     setSelectedPreset(presetName);
+    setSelectedPositioningPoint(nextPositioningPoint);
     setPrompt(nextPrompt);
-    showToast(`${presetName} preset applied.`, "success");
+    showToast(`${presetLabels[presetName] ?? presetName} preset applied.`, "success");
   };
 
   const copyText = async (text: string, successMessage: string) => {
@@ -482,27 +710,13 @@ export default function App() {
       title: "Concept",
       content: (
         <div className="space-y-4">
-          <PresetSelector value={selectedPreset} onChange={applyPreset} />
-          <TextInputField
-            label="Title"
-            value={prompt.concept.title}
-            onChange={(value) => patchNestedSection("concept", "title", value)}
-            placeholder="Premium Branding Package"
-          />
-          <TextInputField
-            label="Description"
-            value={prompt.concept.description}
-            onChange={(value) => patchNestedSection("concept", "description", value)}
-            placeholder="Describe the overall concept"
-            multiline
-          />
           <PositioningMap value={selectedPositioningPoint} options={positioningMap} onChange={setSelectedPositioningPoint} />
           <GroupedChipSelector
             label="Mood"
             selected={prompt.concept.mood}
             groups={filteredMoodGroups}
             onChange={handleMoodChange}
-            collapsibleGroups={["all moods"]}
+            collapsibleSections={{ "all moods": ["all moods"] }}
             placeholder={
               selectedPositioningPoint
                 ? "현재 포지셔닝에 어울리는 무드를 직접 추가해보세요"
@@ -514,7 +728,15 @@ export default function App() {
             selected={prompt.concept.styling}
             groups={filteredStylingGroups}
             onChange={handleStylingChange}
-            collapsibleGroups={["all styling"]}
+            collapsibleSections={{
+              "all styling": [
+                "industrial modernism",
+                "graphic and art direction",
+                "trend and digital culture",
+                "commercial image types",
+                "material and sensory tone",
+              ],
+            }}
             placeholder={
               selectedPositioningPoint
                 ? "현재 포지셔닝에 어울리는 스타일링을 직접 추가해보세요"
@@ -525,22 +747,22 @@ export default function App() {
       ),
     },
     {
-      title: "Object",
+      title: "Subject",
       content: (
         <div className="space-y-4">
           <TextInputField
-            label="Main Object"
+            label="Primary Subject"
             value={prompt.object.main_object}
             onChange={(value) => patchNestedSection("object", "main_object", value)}
             placeholder="glossy black semi-transparent plastic pouch"
-            caption="제품이나 핵심 피사체 자체를 적어주세요. 소재 + 제품 유형처럼 구체적인 명사구로 쓰면 좋아요."
+            caption="실제로 화면에 등장하는 핵심 피사체를 적어주세요. Concept가 전체 방향이라면, 여기서는 무엇을 보여줄지를 구체적으로 씁니다."
           />
           <TextInputField
             label="Shape"
             value={prompt.object.shape}
             onChange={(value) => patchNestedSection("object", "shape", value)}
             placeholder="vertical rectangular pouch with heat-sealed edges"
-            caption="실루엣이나 구조를 한 줄로 설명해 주세요. 비율, 형태, 구조적 특징이 드러나면 좋습니다."
+            caption="같은 피사체라도 형태와 구조가 다르면 이미지가 크게 달라집니다. 실루엣, 비율, 구조를 보충해 주세요."
           />
           <GroupedChipSelector
             label="Details"
@@ -556,10 +778,10 @@ export default function App() {
             onChange={(value) => patchNestedSection("object", "material", value)}
           />
           <ChipSelector
-            label="Surface"
-            selected={prompt.object.surface}
-            options={chipOptions.object.surface}
-            onChange={(value) => patchNestedSection("object", "surface", value)}
+            label="Surface Finish"
+            selected={prompt.object.texture}
+            options={chipOptions.object.texture}
+            onChange={(value) => patchNestedSection("object", "texture", value)}
           />
           <NestedObjectList
             items={prompt.object.inside_objects}
@@ -572,23 +794,9 @@ export default function App() {
       title: "Composition",
       content: (
         <div className="space-y-4">
-          <TextInputField
-            label="View"
+          <CameraViewPicker
             value={prompt.composition.view}
-            onChange={(value) => patchNestedSection("composition", "view", value)}
-            suggestions={chipOptions.composition.view}
-          />
-          <TextInputField
-            label="Angle"
-            value={prompt.composition.angle}
-            onChange={(value) => patchNestedSection("composition", "angle", value)}
-            suggestions={chipOptions.composition.angle}
-          />
-          <TextInputField
-            label="Placement"
-            value={prompt.composition.placement}
-            onChange={(value) => patchNestedSection("composition", "placement", value)}
-            suggestions={chipOptions.composition.placement}
+            onConfirm={(value) => patchNestedSection("composition", "view", value)}
           />
           <TextInputField
             label="Framing"
@@ -601,12 +809,6 @@ export default function App() {
             selected={prompt.composition.layout}
             options={chipOptions.composition.layout}
             onChange={(value) => patchNestedSection("composition", "layout", value)}
-          />
-          <TextInputField
-            label="Balance"
-            value={prompt.composition.balance}
-            onChange={(value) => patchNestedSection("composition", "balance", value)}
-            suggestions={chipOptions.composition.balance}
           />
           <TextInputField
             label="Depth"
@@ -644,18 +846,6 @@ export default function App() {
             value={prompt.lighting.shadow}
             onChange={(value) => patchNestedSection("lighting", "shadow", value)}
             suggestions={chipOptions.lighting.shadow}
-          />
-          <TextInputField
-            label="Mood"
-            value={prompt.lighting.mood}
-            onChange={(value) => patchNestedSection("lighting", "mood", value)}
-            suggestions={chipOptions.lighting.mood}
-          />
-          <TextInputField
-            label="Rendering Style"
-            value={prompt.lighting.rendering_style}
-            onChange={(value) => patchNestedSection("lighting", "rendering_style", value)}
-            suggestions={chipOptions.lighting.rendering_style}
           />
         </div>
       ),
@@ -797,6 +987,9 @@ export default function App() {
 
         <main className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_420px]">
           <div className="space-y-4">
+            <section className="rounded-2xl border border-stone-200 bg-white px-5 py-5 shadow-panel">
+              <PresetSelector value={selectedPreset} onChange={applyPreset} />
+            </section>
             {sections.map((section, index) => (
               <AccordionSection key={section.title} title={section.title} defaultOpen={index < 3}>
                 {section.content}

@@ -7,8 +7,6 @@ export interface InsideObject {
 export interface VisualPrompt {
   prompt_type: string;
   concept: {
-    title: string;
-    description: string;
     mood: string[];
     styling: string[];
   };
@@ -17,16 +15,13 @@ export interface VisualPrompt {
     shape: string;
     material: string[];
     details: string[];
-    surface: string[];
+    texture: string[];
     inside_objects: InsideObject[];
   };
   composition: {
     view: string;
-    angle: string;
-    placement: string;
     framing: string;
     layout: string[];
-    balance: string;
     depth: string;
   };
   lighting: {
@@ -34,8 +29,6 @@ export interface VisualPrompt {
     highlight: string;
     glow: string;
     shadow: string;
-    mood: string;
-    rendering_style: string;
   };
   background: {
     color: string;
@@ -63,8 +56,6 @@ export interface VisualPrompt {
 export const EMPTY_PROMPT: VisualPrompt = {
   prompt_type: "structured_visual_prompt",
   concept: {
-    title: "",
-    description: "",
     mood: [],
     styling: [],
   },
@@ -73,16 +64,13 @@ export const EMPTY_PROMPT: VisualPrompt = {
     shape: "",
     material: [],
     details: [],
-    surface: [],
+    texture: [],
     inside_objects: [],
   },
   composition: {
     view: "",
-    angle: "",
-    placement: "",
     framing: "",
     layout: [],
-    balance: "",
     depth: "",
   },
   lighting: {
@@ -90,8 +78,6 @@ export const EMPTY_PROMPT: VisualPrompt = {
     highlight: "",
     glow: "",
     shadow: "",
-    mood: "",
-    rendering_style: "",
   },
   background: {
     color: "",

@@ -23,25 +23,25 @@ export default function NestedObjectList({ items, onChange }: NestedObjectListPr
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <label className="text-sm font-medium text-stone-800">Inside Objects</label>
+        <label className="text-sm font-medium text-stone-800">Supporting Subjects</label>
         <button
           type="button"
           onClick={() => onChange([...items, emptyItem()])}
           className="rounded-xl border border-stone-200 bg-stone-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-stone-700"
         >
-          Add Object
+          Add Subject
         </button>
       </div>
       <div className="space-y-3">
         {items.length === 0 ? (
           <div className="rounded-xl border border-dashed border-stone-200 bg-stone-50 px-4 py-6 text-sm text-stone-500">
-            Add nested objects when the prompt needs internal items or layered elements.
+            장면에 레이어 요소, 소품, 혹은 보조 시선을 끄는 대상이 필요할 때 supporting subject를 추가해 주세요.
           </div>
         ) : null}
         {items.map((item, index) => (
           <div key={`${index}-${item.name}`} className="rounded-xl border border-stone-200 bg-stone-50 p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <h3 className="text-sm font-medium text-stone-800">Object {index + 1}</h3>
+              <h3 className="text-sm font-medium text-stone-800">Subject {index + 1}</h3>
               <button
                 type="button"
                 onClick={() => deleteItem(index)}
