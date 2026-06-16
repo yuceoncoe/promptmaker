@@ -40,9 +40,10 @@ const compositionViewSet = createOptionSet(chipOptions.composition.view);
 const compositionFramingSet = createOptionSet(chipOptions.composition.framing);
 const compositionLayoutSet = createOptionSet(chipOptions.composition.layout);
 const compositionDepthSet = createOptionSet(chipOptions.composition.depth);
-const lightingMainLightSet = createOptionSet(chipOptions.lighting.main_light);
-const lightingHighlightSet = createOptionSet(chipOptions.lighting.highlight);
-const lightingGlowSet = createOptionSet(chipOptions.lighting.glow);
+const lightingPrimaryLightSet = createOptionSet(chipOptions.lighting.primary_light);
+const lightingReflectionSet = createOptionSet(chipOptions.lighting.reflection);
+const lightingSecondaryLightSet = createOptionSet(chipOptions.lighting.secondary_light);
+const lightingEmissiveSet = createOptionSet(chipOptions.lighting.emissive);
 const lightingShadowSet = createOptionSet(chipOptions.lighting.shadow);
 const backgroundColorSet = createOptionSet(chipOptions.background.color);
 const backgroundStyleSet = createOptionSet(chipOptions.background.style);
@@ -232,6 +233,32 @@ const sanitizeStylingValues = (values: string[]) =>
 const expandLegacyObjectValues = (values: string[], aliasMap: Record<string, string[]>) =>
   values.flatMap((value) => aliasMap[value.trim().toLowerCase()] ?? [value]);
 const normalizeCompositionViewValue = (value: string) => legacyCompositionViewAliasMap[value.trim().toLowerCase()] ?? value;
+const normalizeLightingEmissiveValue = (value: string) => {
+  const normalized = value.trim().toLowerCase();
+  return normalized === "no glow" || normalized === "no accent lighting" || normalized === "no emissive effect" ? "" : value;
+};
+const readStringCandidate = (source: unknown, keys: string[]) => {
+  if (!source || typeof source !== "object") {
+    return "";
+  }
+
+  const record = source as Record<string, unknown>;
+  const match = keys.find((key) => typeof record[key] === "string" && record[key].trim().length > 0);
+  return match ? (record[match] as string) : "";
+};
+
+const readLegacyLightingValue = (
+  source: Record<string, unknown>,
+  fieldValue: string,
+  nestedKeys: string[],
+  topLevelKeys: string[]
+) => {
+  if (fieldValue.trim().length > 0) {
+    return fieldValue;
+  }
+
+  return readStringCandidate(source.lighting, nestedKeys) || readStringCandidate(source, topLevelKeys);
+};
 
 const inferPositioningPointFromMood = (values: string[]): PositioningPoint | null => {
   const legacyValue = values.find((value) => legacyPositioningSet.has(value));
@@ -398,10 +425,97 @@ const mergePrompt = (input: unknown): VisualPrompt => {
     compositionLayoutSet
   );
   merged.composition.depth = sanitizeOptionValue(merged.composition.depth, compositionDepthSet);
-  merged.lighting.main_light = sanitizeOptionValue(merged.lighting.main_light, lightingMainLightSet);
-  merged.lighting.highlight = sanitizeOptionValue(merged.lighting.highlight, lightingHighlightSet);
-  merged.lighting.glow = sanitizeOptionValue(merged.lighting.glow, lightingGlowSet);
-  merged.lighting.shadow = sanitizeOptionValue(merged.lighting.shadow, lightingShadowSet);
+  const rawLightingPrimaryLight = readLegacyLightingValue(
+    source,
+    merged.lighting.primary_light,
+    ["primary_light", "primaryLight", "setup", "main_light", "mainLight", "light", "main", "key_light", "keyLight"],
+    [
+      "lighting_primary_light",
+      "lightingPrimaryLight",
+      "lighting_setup",
+      "lightingSetup",
+      "lighting_main_light",
+      "lightingMainLight",
+      "light",
+      "key_light",
+      "keyLight",
+    ]
+  );
+  const rawLightingReflection = readLegacyLightingValue(
+    source,
+    merged.lighting.reflection,
+    ["reflection", "reflections", "surface_response", "surfaceResponse", "surface", "highlight", "highlights"],
+    [
+      "lighting_reflection",
+      "lightingReflection",
+      "lighting_highlight",
+      "lightingHighlight",
+      "lighting_surface",
+      "lightingSurface",
+      "reflection",
+      "reflections",
+      "highlight",
+      "highlights",
+    ]
+  );
+  const rawLightingSecondaryLight = readLegacyLightingValue(
+    source,
+    merged.lighting.secondary_light,
+    ["secondary_light", "secondaryLight", "support_light", "supportLight", "rim_light", "rimLight", "fill_light", "fillLight"],
+    [
+      "lighting_secondary_light",
+      "lightingSecondaryLight",
+      "lighting_support_light",
+      "lightingSupportLight",
+      "secondary_light",
+      "secondaryLight",
+      "support_light",
+      "supportLight",
+      "rim_light",
+      "rimLight",
+      "fill_light",
+      "fillLight",
+    ]
+  );
+  const rawLightingEmissive = readLegacyLightingValue(
+    source,
+    merged.lighting.emissive,
+    ["emissive", "emissive_effect", "emissiveEffect", "glow", "glow_effect", "glowEffect", "bloom"],
+    [
+      "lighting_emissive",
+      "lightingEmissive",
+      "lighting_glow",
+      "lightingGlow",
+      "emissive",
+      "emissive_effect",
+      "emissiveEffect",
+      "glow",
+      "glow_effect",
+      "glowEffect",
+      "bloom",
+    ]
+  );
+  const legacyLightingAccent = readStringCandidate(source.lighting, ["accent", "accent_light", "accentLight"]);
+  const rawLightingShadow = readLegacyLightingValue(
+    source,
+    merged.lighting.shadow,
+    ["shadow", "shadows", "shadow_type", "shadowType"],
+    ["lighting_shadow", "lightingShadow", "shadow", "shadows", "shadow_type", "shadowType"]
+  );
+  const normalizedLightingPrimaryLight = sanitizeOptionValue(rawLightingPrimaryLight, lightingPrimaryLightSet);
+  const normalizedLightingReflection = sanitizeOptionValue(rawLightingReflection, lightingReflectionSet);
+  const normalizedLightingSecondaryLight =
+    sanitizeOptionValue(rawLightingSecondaryLight, lightingSecondaryLightSet) ||
+    sanitizeOptionValue(legacyLightingAccent, lightingSecondaryLightSet);
+  const normalizedLightingEmissive =
+    sanitizeOptionValue(normalizeLightingEmissiveValue(rawLightingEmissive), lightingEmissiveSet) ||
+    sanitizeOptionValue(normalizeLightingEmissiveValue(legacyLightingAccent), lightingEmissiveSet);
+  const normalizedLightingShadow = sanitizeOptionValue(rawLightingShadow, lightingShadowSet);
+  merged.lighting.primary_light = normalizedLightingPrimaryLight;
+  merged.lighting.reflection = normalizedLightingReflection;
+  merged.lighting.secondary_light = normalizedLightingSecondaryLight;
+  merged.lighting.emissive = normalizedLightingEmissive;
+  merged.lighting.shadow = normalizedLightingShadow;
   merged.background.color = sanitizeOptionValue(merged.background.color, backgroundColorSet);
   merged.background.style = sanitizeOptionValue(merged.background.style, backgroundStyleSet);
   merged.background.surface = sanitizeOptionValue(merged.background.surface, backgroundSurfaceSet);
@@ -442,9 +556,10 @@ const mergePrompt = (input: unknown): VisualPrompt => {
     depth: merged.composition.depth,
   };
   merged.lighting = {
-    main_light: merged.lighting.main_light,
-    highlight: merged.lighting.highlight,
-    glow: merged.lighting.glow,
+    primary_light: merged.lighting.primary_light,
+    reflection: merged.lighting.reflection,
+    secondary_light: merged.lighting.secondary_light,
+    emissive: merged.lighting.emissive,
     shadow: merged.lighting.shadow,
   };
 
@@ -824,28 +939,39 @@ export default function App() {
       content: (
         <div className="space-y-4">
           <TextInputField
-            label="Main Light"
-            value={prompt.lighting.main_light}
-            onChange={(value) => patchNestedSection("lighting", "main_light", value)}
-            suggestions={chipOptions.lighting.main_light}
+            label="Primary Light"
+            value={prompt.lighting.primary_light}
+            onChange={(value) => patchNestedSection("lighting", "primary_light", value)}
+            suggestions={chipOptions.lighting.primary_light}
+            caption="광원의 방향, 세기, 전체 조명 성격처럼 장면의 기본 세팅을 정합니다."
           />
           <TextInputField
-            label="Highlight"
-            value={prompt.lighting.highlight}
-            onChange={(value) => patchNestedSection("lighting", "highlight", value)}
-            suggestions={chipOptions.lighting.highlight}
+            label="Reflection"
+            value={prompt.lighting.reflection}
+            onChange={(value) => patchNestedSection("lighting", "reflection", value)}
+            suggestions={chipOptions.lighting.reflection}
+            caption="재질 위에 맺히는 반사와 하이라이트의 성격을 고릅니다."
           />
           <TextInputField
-            label="Glow"
-            value={prompt.lighting.glow}
-            onChange={(value) => patchNestedSection("lighting", "glow", value)}
-            suggestions={chipOptions.lighting.glow}
+            label="Secondary Light"
+            value={prompt.lighting.secondary_light}
+            onChange={(value) => patchNestedSection("lighting", "secondary_light", value)}
+            suggestions={chipOptions.lighting.secondary_light}
+            caption="림라이트나 필라이트처럼 주광원 외에 형태를 보조하는 추가 광원을 다룹니다."
+          />
+          <TextInputField
+            label="Emissive"
+            value={prompt.lighting.emissive}
+            onChange={(value) => patchNestedSection("lighting", "emissive", value)}
+            suggestions={chipOptions.lighting.emissive}
+            caption="자체 발광, LED 느낌, 빛 번짐처럼 광원 효과에 가까운 요소를 다룹니다."
           />
           <TextInputField
             label="Shadow"
             value={prompt.lighting.shadow}
             onChange={(value) => patchNestedSection("lighting", "shadow", value)}
             suggestions={chipOptions.lighting.shadow}
+            caption="그림자의 깊이, 경계, 접지감처럼 물체가 놓이는 느낌을 정리합니다."
           />
         </div>
       ),

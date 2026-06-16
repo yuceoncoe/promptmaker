@@ -25,9 +25,10 @@ export const calculateQualityScore = (prompt: VisualPrompt): number => {
   ) score += 15;
   if (
     hasText(
-      prompt.lighting.main_light,
-      prompt.lighting.highlight,
-      prompt.lighting.glow,
+      prompt.lighting.primary_light,
+      prompt.lighting.reflection,
+      prompt.lighting.secondary_light,
+      prompt.lighting.emissive,
       prompt.lighting.shadow
     )
   ) score += 15;

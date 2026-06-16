@@ -122,9 +122,10 @@ export const buildFinalPrompt = (prompt: VisualPrompt): string => {
   }
 
   const lightingParts = [
-    prompt.lighting.main_light,
-    prompt.lighting.highlight,
-    prompt.lighting.glow,
+    prompt.lighting.primary_light,
+    prompt.lighting.reflection,
+    prompt.lighting.secondary_light,
+    prompt.lighting.emissive,
     prompt.lighting.shadow,
   ].filter(nonEmpty);
   if (lightingParts.length > 0) {

@@ -274,6 +274,7 @@ export const chipLabelTranslations: Record<string, string> = {
   "subtle LED glow": "은은한 LED 발광",
   "neon edge glow": "네온 가장자리 발광",
   "no glow": "발광 없음",
+  "no accent lighting": "강조 조명 없음",
   "soft ambient bloom": "부드러운 주변 번짐",
   "screen-lit glow": "스크린 빛 발광",
   "soft natural shadow": "부드러운 자연 그림자",

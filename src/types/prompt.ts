@@ -25,9 +25,10 @@ export interface VisualPrompt {
     depth: string;
   };
   lighting: {
-    main_light: string;
-    highlight: string;
-    glow: string;
+    primary_light: string;
+    reflection: string;
+    secondary_light: string;
+    emissive: string;
     shadow: string;
   };
   background: {
@@ -74,9 +75,10 @@ export const EMPTY_PROMPT: VisualPrompt = {
     depth: "",
   },
   lighting: {
-    main_light: "",
-    highlight: "",
-    glow: "",
+    primary_light: "",
+    reflection: "",
+    secondary_light: "",
+    emissive: "",
     shadow: "",
   },
   background: {

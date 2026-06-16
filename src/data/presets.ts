@@ -47,9 +47,10 @@ export const presets: Record<string, VisualPrompt> = {
       depth: "shallow depth of field",
     },
     lighting: {
-      main_light: "soft studio lighting",
-      highlight: "soft premium highlights",
-      glow: "no glow",
+      primary_light: "soft studio lighting",
+      reflection: "soft premium highlights",
+      secondary_light: "",
+      emissive: "",
       shadow: "soft natural shadow",
     },
     background: {
@@ -83,9 +84,10 @@ export const presets: Record<string, VisualPrompt> = {
       depth: "shallow depth of field",
     },
     lighting: {
-      main_light: "soft studio lighting",
-      highlight: "clean product reflections",
-      glow: "subtle LED glow",
+      primary_light: "soft studio lighting",
+      reflection: "clean product reflections",
+      secondary_light: "",
+      emissive: "subtle LED glow",
       shadow: "soft natural shadow",
     },
     background: {
@@ -119,9 +121,10 @@ export const presets: Record<string, VisualPrompt> = {
       depth: "deep product shadow",
     },
     lighting: {
-      main_light: "diffused commercial lighting",
-      highlight: "soft premium highlights",
-      glow: "no glow",
+      primary_light: "diffused commercial lighting",
+      reflection: "soft premium highlights",
+      secondary_light: "",
+      emissive: "",
       shadow: "soft natural shadow",
     },
     background: {
@@ -155,9 +158,10 @@ export const presets: Record<string, VisualPrompt> = {
       depth: "layered depth",
     },
     lighting: {
-      main_light: "strong overhead studio light",
-      highlight: "strong glossy highlights",
-      glow: "neon edge glow",
+      primary_light: "strong overhead studio light",
+      reflection: "strong glossy highlights",
+      secondary_light: "",
+      emissive: "neon edge glow",
       shadow: "dramatic shadow",
     },
     background: {
@@ -191,9 +195,10 @@ export const presets: Record<string, VisualPrompt> = {
       depth: "layered depth",
     },
     lighting: {
-      main_light: "cinematic high contrast lighting",
-      highlight: "strong glossy highlights",
-      glow: "warm internal glow",
+      primary_light: "cinematic high contrast lighting",
+      reflection: "strong glossy highlights",
+      secondary_light: "",
+      emissive: "warm internal glow",
       shadow: "deep product shadow",
     },
     background: {
@@ -227,9 +232,10 @@ export const presets: Record<string, VisualPrompt> = {
       depth: "layered depth",
     },
     lighting: {
-      main_light: "soft studio lighting",
-      highlight: "strong glossy highlights",
-      glow: "warm internal glow",
+      primary_light: "soft studio lighting",
+      reflection: "strong glossy highlights",
+      secondary_light: "",
+      emissive: "warm internal glow",
       shadow: "minimal shadow",
     },
     background: {
@@ -263,9 +269,10 @@ export const presets: Record<string, VisualPrompt> = {
       depth: "shallow depth of field",
     },
     lighting: {
-      main_light: "soft studio lighting",
-      highlight: "clean product reflections",
-      glow: "subtle LED glow",
+      primary_light: "soft studio lighting",
+      reflection: "clean product reflections",
+      secondary_light: "",
+      emissive: "subtle LED glow",
       shadow: "soft natural shadow",
     },
     background: {
@@ -299,9 +306,10 @@ export const presets: Record<string, VisualPrompt> = {
       depth: "shallow depth of field",
     },
     lighting: {
-      main_light: "large softbox from upper left",
-      highlight: "soft premium highlights",
-      glow: "no glow",
+      primary_light: "large softbox from upper left",
+      reflection: "soft premium highlights",
+      secondary_light: "",
+      emissive: "",
       shadow: "soft natural shadow",
     },
     background: {
@@ -335,9 +343,10 @@ export const presets: Record<string, VisualPrompt> = {
       depth: "shallow depth of field",
     },
     lighting: {
-      main_light: "soft studio lighting",
-      highlight: "long reflective highlights",
-      glow: "no glow",
+      primary_light: "soft studio lighting",
+      reflection: "long reflective highlights",
+      secondary_light: "",
+      emissive: "",
       shadow: "soft natural shadow",
     },
     background: {
@@ -371,9 +380,10 @@ export const presets: Record<string, VisualPrompt> = {
       depth: "transparent surface depth",
     },
     lighting: {
-      main_light: "large softbox from upper left",
-      highlight: "soft premium highlights",
-      glow: "no glow",
+      primary_light: "large softbox from upper left",
+      reflection: "soft premium highlights",
+      secondary_light: "",
+      emissive: "",
       shadow: "soft natural shadow",
     },
     background: {
@@ -407,9 +417,10 @@ export const presets: Record<string, VisualPrompt> = {
       depth: "layered depth",
     },
     lighting: {
-      main_light: "cinematic high contrast lighting",
-      highlight: "long reflective highlights",
-      glow: "neon edge glow",
+      primary_light: "cinematic high contrast lighting",
+      reflection: "long reflective highlights",
+      secondary_light: "",
+      emissive: "neon edge glow",
       shadow: "dramatic shadow",
     },
     background: {
@@ -443,9 +454,10 @@ export const presets: Record<string, VisualPrompt> = {
       depth: "stacked foreground-background depth",
     },
     lighting: {
-      main_light: "cinematic high contrast lighting",
-      highlight: "strong glossy highlights",
-      glow: "neon edge glow",
+      primary_light: "cinematic high contrast lighting",
+      reflection: "strong glossy highlights",
+      secondary_light: "",
+      emissive: "neon edge glow",
       shadow: "dramatic shadow",
     },
     background: {

@@ -293,7 +293,7 @@ export const chipOptions = {
     ],
   },
   lighting: {
-    main_light: [
+    primary_light: [
       "soft studio lighting",
       "strong overhead studio light",
       "large softbox from upper left",
@@ -301,10 +301,8 @@ export const chipOptions = {
       "cinematic high contrast lighting",
       "bright catalog lighting",
       "moody spotlight lighting",
-      "soft ambient fill lighting",
-      "sharp directional rim lighting",
     ],
-    highlight: [
+    reflection: [
       "strong glossy highlights",
       "soft premium highlights",
       "long reflective highlights",
@@ -313,11 +311,14 @@ export const chipOptions = {
       "subtle satin highlights",
       "glass-like specular highlights",
     ],
-    glow: [
+    secondary_light: [
+      "soft ambient fill lighting",
+      "sharp directional rim lighting",
+    ],
+    emissive: [
       "warm internal glow",
       "subtle LED glow",
       "neon edge glow",
-      "no glow",
       "soft ambient bloom",
       "screen-lit glow",
     ],
