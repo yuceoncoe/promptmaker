@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import ChipSelector from "./ChipSelector";
+import LabelWithBadge from "./LabelWithBadge";
 
 interface GroupedChipSelectorProps {
   label: string;
@@ -53,14 +54,7 @@ export default function GroupedChipSelector({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <label className="text-sm font-medium text-stone-800">{label}</label>
-        {selected.length > 0 ? (
-          <span className="inline-flex items-center justify-center rounded-full border border-black bg-black px-2 py-0.5 text-[10px] font-medium text-white transition">
-            {selected.length}
-          </span>
-        ) : null}
-      </div>
+      <LabelWithBadge label={label} count={selected.length} />
       <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
         <div className="space-y-6">
           {standaloneGroups.map(([groupName, options]) => {

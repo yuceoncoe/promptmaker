@@ -1,4 +1,5 @@
 import { getChipLabel } from "../data/chipLabels";
+import LabelWithBadge from "./LabelWithBadge";
 
 interface TextInputFieldProps {
   label: string;
@@ -24,7 +25,7 @@ export default function TextInputField({
 
   return (
     <div className="space-y-3">
-      <label className="block text-sm font-medium text-stone-800">{label}</label>
+      <LabelWithBadge label={label} count={value.trim().length > 0 ? 1 : 0} />
       {multiline ? (
         <textarea
           value={value}

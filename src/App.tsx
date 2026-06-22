@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import AccordionSection from "./components/AccordionSection";
+import LabelWithBadge from "./components/LabelWithBadge";
 import CameraViewPicker from "./components/CameraViewPicker";
 import ChipSelector from "./components/ChipSelector";
 import GroupedChipSelector from "./components/GroupedChipSelector";
@@ -669,14 +670,7 @@ function SubjectDetailsField({
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-2">
-        <label className="text-sm font-medium text-stone-800">Details</label>
-        {selected.length > 0 ? (
-          <span className="inline-flex items-center justify-center rounded-full border border-black bg-black px-2 py-0.5 text-[10px] font-medium text-white transition">
-            {selected.length}
-          </span>
-        ) : null}
-      </div>
+      <LabelWithBadge label="Details" count={selected.length} />
       <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
         <div className="space-y-6">
           <ChipSelector
@@ -694,14 +688,7 @@ function SubjectDetailsField({
             includeSelectedInOptions={false}
           />
           <div className="space-y-3 border-t border-stone-200 pt-5">
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-stone-800">Supporting subject</label>
-              {supportingSubjects.length > 0 ? (
-                <span className="inline-flex items-center justify-center rounded-full border border-black bg-black px-2 py-0.5 text-[10px] font-medium text-white transition">
-                  {supportingSubjects.length}
-                </span>
-              ) : null}
-            </div>
+            <LabelWithBadge label="Supporting subject" count={supportingSubjects.length} />
             {supportingSubjects.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {supportingSubjects.map((item) => (

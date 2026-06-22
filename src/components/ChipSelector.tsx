@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { getChipLabel } from "../data/chipLabels";
+import LabelWithBadge from "./LabelWithBadge";
 
 interface ChipSelectorProps {
   label: string;
@@ -53,16 +54,7 @@ export default function ChipSelector({
 
   return (
     <div className="space-y-3">
-      {label ? (
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-stone-800">{label}</label>
-          {activeCount > 0 ? (
-            <span className="inline-flex items-center justify-center rounded-full border border-black bg-black px-2 py-0.5 text-[10px] font-medium text-white transition">
-              {activeCount}
-            </span>
-          ) : null}
-        </div>
-      ) : null}
+      <LabelWithBadge label={label} count={activeCount} />
       <div className="flex flex-wrap gap-2">
         {allOptions.map((option) => {
           const active = selected.includes(option);
