@@ -62,7 +62,14 @@ export default function GroupedChipSelector({
 
             return (
               <div key={groupName} className="space-y-3">
-                <div className="text-xs font-semibold uppercase tracking-normal text-stone-500">{groupName}</div>
+                <div className="flex min-h-[24px] items-center gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-normal text-stone-500">{groupName}</span>
+                  {selected.filter((item) => combinedOptions.includes(item)).length > 0 ? (
+                    <span className="inline-flex items-center justify-center rounded-full border border-black bg-black px-2.5 py-0.5 text-[11px] font-medium text-white transition">
+                      {selected.filter((item) => combinedOptions.includes(item)).length}
+                    </span>
+                  ) : null}
+                </div>
                 {combinedOptions.length > 0 ? (
                   <ChipSelector
                     label=""
@@ -104,7 +111,14 @@ export default function GroupedChipSelector({
 
                     return (
                       <div key={groupName} className="space-y-3">
-                        <div className="text-xs font-semibold uppercase tracking-normal text-stone-500">{groupName}</div>
+                        <div className="flex min-h-[24px] items-center gap-2">
+                          <span className="text-xs font-semibold uppercase tracking-normal text-stone-500">{groupName}</span>
+                          {selected.filter((item) => combinedOptions.includes(item)).length > 0 ? (
+                            <span className="inline-flex items-center justify-center rounded-full border border-black bg-black px-2.5 py-0.5 text-[11px] font-medium text-white transition">
+                              {selected.filter((item) => combinedOptions.includes(item)).length}
+                            </span>
+                          ) : null}
+                        </div>
                         {combinedOptions.length > 0 ? (
                           <ChipSelector
                             label=""
@@ -127,7 +141,14 @@ export default function GroupedChipSelector({
             </div>
           ))}
           <div className="border-t border-stone-200 pt-6">
-            <div className="mb-3 text-xs font-semibold uppercase tracking-normal text-stone-500">custom</div>
+            <div className="mb-3 flex min-h-[24px] items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-normal text-stone-500">custom</span>
+              {customSelected.length > 0 ? (
+                <span className="inline-flex items-center justify-center rounded-full border border-black bg-black px-2.5 py-0.5 text-[11px] font-medium text-white transition">
+                  {customSelected.length}
+                </span>
+              ) : null}
+            </div>
             {customSelected.length > 0 ? (
               <div className="mb-3 flex flex-wrap gap-2">
                 {customSelected.map((item) => (
