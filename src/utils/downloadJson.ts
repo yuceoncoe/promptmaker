@@ -1,6 +1,6 @@
-import type { VisualPrompt } from "../types/prompt";
+import type { UnifiedPrompt } from "../types/prompt";
 
-export const downloadJson = (data: VisualPrompt, fileName = "visual-prompt.json") => {
+export const downloadJson = (data: UnifiedPrompt, fileName = "visual-prompt.json") => {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");

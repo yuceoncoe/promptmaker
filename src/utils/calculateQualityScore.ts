@@ -1,46 +1,33 @@
-import type { VisualPrompt } from "../types/prompt";
+import type { UnifiedPrompt } from "../types/prompt";
 
 const hasText = (...values: string[]) => values.some((value) => value.trim().length > 0);
 const hasItems = (items: string[]) => items.some((item) => item.trim().length > 0);
 
-export const calculateQualityScore = (prompt: VisualPrompt): number => {
+export const calculateQualityScore = (prompt: UnifiedPrompt): number => {
   let score = 0;
 
   if (
-    hasItems(prompt.concept.mood) ||
-    hasItems(prompt.concept.styling) ||
-    hasText(
-      prompt.concept.style.medium,
-      prompt.concept.style.art_direction,
-      prompt.concept.style.rendering,
-      prompt.concept.style.era
-    )
+    hasText(prompt.meta.purpose) ||
+    hasItems(prompt.style.mood) ||
+    hasItems(prompt.style.medium) ||
+    hasItems(prompt.style.aesthetic) ||
+    hasItems(prompt.style.era)
   ) {
-    score += 10;
+    score += 20;
   }
   if (
-    hasText(prompt.object.main_object, prompt.object.shape) ||
-    hasItems(prompt.object.details)
+    hasText(prompt.subject.main_object, prompt.subject.type) ||
+    hasItems(prompt.subject.details)
+  ) score += 30;
+  if (
+    hasText(prompt.scene.background) ||
+    hasItems(prompt.scene.composition)
   ) score += 20;
   if (
-    hasText(
-      prompt.composition.view,
-      prompt.composition.framing,
-      prompt.composition.depth
-    ) || hasItems(prompt.composition.layout)
-  ) score += 15;
-  if (
-    hasText(
-      prompt.lighting.primary_light,
-      prompt.lighting.reflection,
-      prompt.lighting.secondary_light,
-      prompt.lighting.emissive,
-      prompt.lighting.shadow
-    )
-  ) score += 15;
-  if (hasText(prompt.background.color, prompt.background.style, prompt.background.surface, prompt.background.purpose)) score += 10;
-  if (prompt.style_keywords.filter((item) => item.trim()).length >= 3) score += 10;
-  if (prompt.negative_prompt.filter((item) => item.trim()).length >= 3) score += 5;
+    hasItems(prompt.style.lighting) ||
+    hasItems(prompt.style.color_palette)
+  ) score += 20;
+  if (prompt.constraints.negative_prompt.filter((item) => item.trim()).length >= 3) score += 10;
 
   return Math.min(score, 100);
 };

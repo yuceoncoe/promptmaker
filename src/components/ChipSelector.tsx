@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { getChipLabel } from "../data/chipLabels";
 import LabelWithBadge from "./LabelWithBadge";
 
@@ -10,6 +10,7 @@ interface ChipSelectorProps {
   placeholder?: string;
   allowCustom?: boolean;
   includeSelectedInOptions?: boolean;
+  onAddCustom?: (value: string) => void;
 }
 
 const normalize = (value: string) => value.trim();
@@ -22,8 +23,17 @@ export default function ChipSelector({
   placeholder = "Add a custom value and press Enter",
   allowCustom = true,
   includeSelectedInOptions = true,
+  onAddCustom,
 }: ChipSelectorProps) {
   const [draft, setDraft] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isModalOpen && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isModalOpen]);
 
   const allOptions = useMemo(() => {
     const source = includeSelectedInOptions ? [...options, ...selected] : [...options];
@@ -46,8 +56,14 @@ export default function ChipSelector({
       return;
     }
 
-    onChange([...selected, normalized]);
+    if (onAddCustom) {
+      onAddCustom(normalized);
+    } else {
+      onChange([...selected, normalized]);
+    }
+    
     setDraft("");
+    setIsModalOpen(false);
   };
 
   const activeCount = selected.filter((item) => allOptions.includes(item)).length;
@@ -74,30 +90,55 @@ export default function ChipSelector({
             </button>
           );
         })}
-      </div>
-      {allowCustom ? (
-        <div className="flex gap-2">
-          <input
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                submitCustomChip();
-              }
-            }}
-            placeholder={placeholder}
-            className="min-w-0 flex-1 rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-400 focus:ring-2 focus:ring-stone-200"
-          />
+        {allowCustom && (
           <button
             type="button"
-            onClick={submitCustomChip}
-            className="rounded-xl border border-stone-200 bg-stone-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-stone-700"
+            onClick={() => setIsModalOpen(true)}
+            className="rounded-full border border-dashed border-stone-300 px-3 py-1.5 text-sm text-stone-500 transition hover:bg-stone-50 hover:text-stone-900"
           >
-            Add
+            + 직접 추가
           </button>
+        )}
+      </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="mb-4 text-lg font-bold text-stone-900">커스텀 항목 추가</h3>
+            <input
+              ref={inputRef}
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  submitCustomChip();
+                } else if (event.key === "Escape") {
+                  setIsModalOpen(false);
+                }
+              }}
+              placeholder={placeholder}
+              className="w-full rounded-xl border border-stone-200 bg-white px-3 py-3 text-sm outline-none transition focus:border-stone-400 focus:ring-2 focus:ring-stone-200"
+            />
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="rounded-xl px-4 py-2 text-sm font-medium text-stone-600 transition hover:bg-stone-100"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={submitCustomChip}
+                className="rounded-xl bg-black px-4 py-2 text-sm font-medium text-white transition hover:bg-stone-800"
+              >
+                추가
+              </button>
+            </div>
+          </div>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }

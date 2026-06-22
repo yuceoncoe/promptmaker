@@ -1,9 +1,9 @@
 import { useState, useRef } from "react";
 import JsonPreview from "./JsonPreview";
-import type { VisualPrompt } from "../types/prompt";
+import type { UnifiedPrompt } from "../types/prompt";
 
 interface ResultPanelProps {
-  prompt: VisualPrompt;
+  prompt: UnifiedPrompt;
   score: number;
   onCopyJson: () => void;
   onCopyPrompt: () => void;

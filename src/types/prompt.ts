@@ -1,117 +1,58 @@
-export interface InsideObject {
-  name: string;
-  description: string;
-  material: string;
-}
-
-export interface VisualPrompt {
-  prompt_type: string;
-  concept: {
-    mood: string[];
-    styling: string[];
-    style: {
-      medium: string;
-      art_direction: string;
-      rendering: string;
-      era: string;
-    };
-  };
-  object: {
-    main_object: string;
-    shape: string;
-    material: string[];
-    details: string[];
-    texture: string[];
-    inside_objects: InsideObject[];
-  };
-  composition: {
-    view: string;
-    framing: string;
-    layout: string[];
-    depth: string;
-  };
-  lighting: {
-    primary_light: string;
-    reflection: string;
-    secondary_light: string;
-    emissive: string;
-    shadow: string;
-  };
-  background: {
-    color: string;
-    style: string;
-    surface: string;
+export interface UnifiedPrompt {
+  meta: {
+    title: string;
     purpose: string;
   };
-  color_palette: {
-    primary: string[];
-    accent: string[];
-    contrast: string;
+  subject: {
+    type: string;
+    main_object: string;
+    details: string[];
   };
-  text_elements: {
-    top_left_text: string;
-    price_label: string;
-    bottom_labels: string[];
-    text_direction: string;
-    note: string;
+  scene: {
+    background: string;
+    composition: string[];
   };
-  style_keywords: string[];
-  negative_prompt: string[];
+  style: {
+    medium: string[];
+    aesthetic: string[];
+    era: string[];
+    mood: string[];
+    color_palette: string[];
+    lighting: string[];
+  };
+  constraints: {
+    negative_prompt: string[];
+    aspect_ratio: string;
+  };
   final_prompt: string;
 }
 
-export const EMPTY_PROMPT: VisualPrompt = {
-  prompt_type: "structured_visual_prompt",
-  concept: {
-    mood: [],
-    styling: [],
-    style: {
-      medium: "",
-      art_direction: "",
-      rendering: "",
-      era: "",
-    },
-  },
-  object: {
-    main_object: "",
-    shape: "",
-    material: [],
-    details: [],
-    texture: [],
-    inside_objects: [],
-  },
-  composition: {
-    view: "",
-    framing: "",
-    layout: [],
-    depth: "",
-  },
-  lighting: {
-    primary_light: "",
-    reflection: "",
-    secondary_light: "",
-    emissive: "",
-    shadow: "",
-  },
-  background: {
-    color: "",
-    style: "",
-    surface: "",
+export const EMPTY_PROMPT: UnifiedPrompt = {
+
+  meta: {
+    title: "",
     purpose: "",
   },
-  color_palette: {
-    primary: [],
-    accent: [],
-    contrast: "",
+  subject: {
+    type: "product",
+    main_object: "",
+    details: [],
   },
-  text_elements: {
-    top_left_text: "",
-    price_label: "",
-    bottom_labels: [],
-    text_direction: "",
-    note: "",
+  scene: {
+    background: "",
+    composition: [],
   },
-  style_keywords: [],
-  negative_prompt: [],
+  style: {
+    medium: [],
+    aesthetic: [],
+    era: [],
+    mood: [],
+    color_palette: [],
+    lighting: [],
+  },
+  constraints: {
+    negative_prompt: [],
+    aspect_ratio: "1:1",
+  },
   final_prompt: "",
 };

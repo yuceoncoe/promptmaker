@@ -1,7 +1,7 @@
-import type { VisualPrompt } from "../types/prompt";
+import type { UnifiedPrompt } from "../types/prompt";
 
 interface JsonPreviewProps {
-  prompt: VisualPrompt;
+  prompt: UnifiedPrompt;
 }
 
 export default function JsonPreview({ prompt }: JsonPreviewProps) {

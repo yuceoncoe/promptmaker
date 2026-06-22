@@ -2,84 +2,53 @@ export const chipOptions = {
   concept: {
     mood: {
       brand_personality: [
-        "modern",
-        "premium",
-        "playful",
-        "minimal",
-        "bold",
-        "elegant",
-        "futuristic",
-        "calm",
-        "energetic",
-        "nostalgic",
-        "sophisticated",
-        "cute",
-        "refined",
-        "confident",
         "friendly",
-        "clean",
         "warm",
-        "serious",
-        "graphic",
-        "edgy",
-        "luxurious",
-        "intelligent",
         "trustworthy",
-        "youthful",
-        "romantic",
-        "dramatic",
-        "playful-luxury",
-        "quirky",
-        "timeless",
-        "organic",
-        "technical",
-        "sleek",
-        "polished",
-        "soft",
-        "crisp",
-        "loud",
-        "subtle",
-        "luxury-street",
-        "editorial",
-        "aspirational",
-        "grounded",
-        "poetic",
-        "sharp",
-        "vibrant",
-        "muted",
-        "industrial",
-        "delicate",
-        "immersive",
-        "iconic",
-        "exclusive",
-        "casual",
-        "sporty",
-        "rebellious",
-        "mysterious",
-        "playful-tech",
-        "glossy",
-        "matte",
-        "sensual",
-        "whimsical",
-        "precise",
-        "curated",
-        "raw",
-        "elevated",
-        "y2k",
-        "retro-futuristic",
-        "quiet-luxury",
-        "streetwise",
-        "cheerful",
-        "ceremonial",
-        "artful",
-        "progressive",
-        "practical",
         "dependable",
-        "artisanal",
-        "daring",
-        "upbeat",
+        "practical",
+        "intelligent",
+        "premium",
+        "luxurious",
+        "elegant",
+        "refined",
+        "timeless",
+        "minimal",
+        "clean",
+        "calm",
+        "serious",
+        "sophisticated",
         "tasteful",
         "understated",
+        "modern",
+        "sleek",
+        "technical",
+        "organic",
+        "bold",
+        "dramatic",
+        "graphic",
+        "edgy",
+        "daring",
+        "playful",
+        "quirky",
+        "playful-luxury",
+        "energetic",
+        "upbeat",
+        "futuristic",
+        "nostalgic",
+        "romantic",
+        "youthful",
+        "confident",
+        "cute",
+        "loud",
+        "vibrant",
+        "cheerful",
+        "aspirational",
+        "polished",
+        "muted",
+        "streetwise",
+        "iconic",
+        "artisanal",
       ],
     },
     styling: {
@@ -216,16 +185,13 @@ export const chipOptions = {
       "steel",
       "foil",
     ],
-    texture: [
+    finish: [
       "high-gloss",
       "matte",
       "brushed",
       "sandblasted",
       "frosted",
-      "ribbed",
       "soft-touch",
-      "wrinkled",
-      "embossed",
     ],
   },
   composition: {
@@ -265,6 +231,7 @@ export const chipOptions = {
       "wide landscape framing",
     ],
     layout: [
+      "editorial layout",
       "centered hero composition",
       "off-center composition",
       "lower-third anchored composition",
@@ -751,3 +718,61 @@ export const legacyPositioningPointMap: Record<string, { x: number; y: number }>
 };
 
 export const positioningIds = positioningMap.map((item) => item.id);
+
+
+export const mood_groups: Record<string, string[]> = {
+  "Accessible & Friendly": [
+    "friendly", "warm", "trustworthy", "dependable", "practical", "intelligent", "calm", "cheerful"
+  ],
+  "Premium & Elegant": [
+    "premium", "luxurious", "elegant", "refined", "timeless", "minimal", "clean", "serious", "sophisticated", "tasteful", "understated", "polished", "artisanal"
+  ],
+  "Bold & Expressive": [
+    "bold", "dramatic", "graphic", "edgy", "daring", "playful", "quirky", "playful-luxury", "energetic", "upbeat", "loud", "vibrant", "confident", "streetwise", "iconic"
+  ],
+  "Modern & Youthful": [
+    "modern", "sleek", "technical", "organic", "futuristic", "nostalgic", "romantic", "youthful", "cute", "aspirational", "muted"
+  ]
+};
+
+export const aesthetic_groups: Record<string, string[]> = {
+  "Minimal & Natural": [
+    "minimal", "organic", "wabi-sabi", "japandi", "scandinavian minimalism", "quiet luxury", "clean beauty", "zen minimalism", "ethereal", "apothecary"
+  ],
+  "Industrial & Technical": [
+    "industrial", "bauhaus", "utilitarian design", "brutalism", "high-tech", "sleek modernism", "clinical", "cyber-physical"
+  ],
+  "Artistic & Editorial": [
+    "editorial", "conceptual art", "surreal", "avant-garde", "deconstructivism", "cinematic", "artisanal", "still life", "monochrome", "high-end commercial"
+  ],
+  "Pop & Commercial": [
+    "pop art", "memphis design", "gloss maximalism", "kitsch", "retro-pop", "neo-classic", "bold graphic"
+  ]
+};
+
+export const era_groups: Record<string, string[]> = {
+  "Classic & Vintage": [
+    "art deco", "victorian", "vintage apothecary", "art nouveau"
+  ],
+  "Retro & Pop": [
+    "70s retro", "80s synthwave", "90s", "y2k", "nostalgic"
+  ],
+  "Future & Digital": [
+    "retro-futuristic", "vaporwave", "frutiger aero", "cyberpunk", "space age"
+  ],
+  "Modern": [
+    "mid-century modern", "contemporary", "postmodern"
+  ]
+};
+
+export const medium_groups: Record<string, string[]> = {
+  "Photography": [
+    "Photography", "Polaroid", "Film Photography", "Product Mockup"
+  ],
+  "Digital & 3D": [
+    "3D Render", "Digital Art", "Vector Art", "Hyper-realistic"
+  ],
+  "Art & Illustration": [
+    "Illustration", "Sketch", "Oil Painting"
+  ]
+};
