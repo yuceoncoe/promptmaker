@@ -1213,43 +1213,7 @@ export default function App() {
         </div>
       ),
     },
-    {
-      title: "Text Elements",
-      content: (
-        <div className="space-y-4">
-          <TextInputField
-            label="Top Left Text"
-            value={prompt.text_elements.top_left_text}
-            onChange={(value) => patchNestedSection("text_elements", "top_left_text", value)}
-            suggestions={chipOptions.text_elements.top_left_text}
-          />
-          <TextInputField
-            label="Price Label"
-            value={prompt.text_elements.price_label}
-            onChange={(value) => patchNestedSection("text_elements", "price_label", value)}
-            suggestions={chipOptions.text_elements.price_label}
-          />
-          <ChipSelector
-            label="Bottom Labels"
-            selected={prompt.text_elements.bottom_labels}
-            options={chipOptions.text_elements.bottom_labels}
-            onChange={(value) => patchNestedSection("text_elements", "bottom_labels", value)}
-          />
-          <TextInputField
-            label="Text Direction"
-            value={prompt.text_elements.text_direction}
-            onChange={(value) => patchNestedSection("text_elements", "text_direction", value)}
-            suggestions={chipOptions.text_elements.text_direction}
-          />
-          <TextInputField
-            label="Note"
-            value={prompt.text_elements.note}
-            onChange={(value) => patchNestedSection("text_elements", "note", value)}
-            suggestions={chipOptions.text_elements.note}
-          />
-        </div>
-      ),
-    },
+
     {
       title: "Style Keywords",
       content: (
