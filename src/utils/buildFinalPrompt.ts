@@ -1,4 +1,4 @@
-import type { InsideObject, VisualPrompt } from "../types/prompt";
+import type { VisualPrompt } from "../types/prompt";
 
 const nonEmpty = (value: string) => value.trim().length > 0;
 
@@ -61,18 +61,6 @@ const promptViewMap: Record<string, string> = {
 
 const getPromptFriendlyView = (value: string) => promptViewMap[value] ?? value;
 
-const insideObjectSummary = (items: InsideObject[]) => {
-  const summaries = items
-    .map((item) => [item.description || item.name, item.material ? `made of ${item.material}` : ""].filter(nonEmpty).join(", "))
-    .filter(nonEmpty);
-
-  if (!summaries.length) {
-    return "";
-  }
-
-  return `Include supporting subject details such as ${summaries.join("; ")}.`;
-};
-
 export const buildFinalPrompt = (prompt: VisualPrompt): string => {
   const parts: string[] = [];
 
@@ -80,7 +68,16 @@ export const buildFinalPrompt = (prompt: VisualPrompt): string => {
     parts.push(`Mood: ${joinList(prompt.concept.mood)}.`);
   }
 
-  if (prompt.concept.styling.length > 0) {
+  const stylingParts = [
+    prompt.concept.style.medium ? `medium ${prompt.concept.style.medium}` : "",
+    prompt.concept.style.art_direction ? `art direction ${prompt.concept.style.art_direction}` : "",
+    prompt.concept.style.rendering ? `rendering ${prompt.concept.style.rendering}` : "",
+    prompt.concept.style.era ? `era ${prompt.concept.style.era}` : "",
+  ].filter(nonEmpty);
+
+  if (stylingParts.length > 0) {
+    parts.push(`Styling: ${stylingParts.join(", ")}.`);
+  } else if (prompt.concept.styling.length > 0) {
     parts.push(`Styling: ${joinList(prompt.concept.styling)}.`);
   }
 
@@ -95,20 +92,7 @@ export const buildFinalPrompt = (prompt: VisualPrompt): string => {
   }
 
   if (prompt.object.details.length > 0) {
-    parts.push(`Subject details: ${joinList(prompt.object.details)}.`);
-  }
-
-  if (prompt.object.material.length > 0) {
-    parts.push(`Material: ${joinList(prompt.object.material)}.`);
-  }
-
-  if (prompt.object.texture.length > 0) {
-    parts.push(`Surface finish: ${joinList(prompt.object.texture)}.`);
-  }
-
-  const insideObjects = insideObjectSummary(prompt.object.inside_objects);
-  if (insideObjects) {
-    parts.push(insideObjects);
+    parts.push(`Subject details, including texture, material, and supporting elements: ${joinList(prompt.object.details)}.`);
   }
 
   const compositionParts = [

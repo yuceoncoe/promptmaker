@@ -9,6 +9,12 @@ export interface VisualPrompt {
   concept: {
     mood: string[];
     styling: string[];
+    style: {
+      medium: string;
+      art_direction: string;
+      rendering: string;
+      era: string;
+    };
   };
   object: {
     main_object: string;
@@ -59,6 +65,12 @@ export const EMPTY_PROMPT: VisualPrompt = {
   concept: {
     mood: [],
     styling: [],
+    style: {
+      medium: "",
+      art_direction: "",
+      rendering: "",
+      era: "",
+    },
   },
   object: {
     main_object: "",

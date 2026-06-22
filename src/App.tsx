@@ -3,7 +3,6 @@ import AccordionSection from "./components/AccordionSection";
 import CameraViewPicker from "./components/CameraViewPicker";
 import ChipSelector from "./components/ChipSelector";
 import GroupedChipSelector from "./components/GroupedChipSelector";
-import NestedObjectList from "./components/NestedObjectList";
 import PositioningMap, { type PositioningPoint } from "./components/PositioningMap";
 import PresetSelector from "./components/PresetSelector";
 import ResultPanel from "./components/ResultPanel";
@@ -24,6 +23,42 @@ type ToastState = {
   type: "success" | "error";
 } | null;
 
+const conceptStyleOptions = {
+  medium: ["사진", "3D", "일러스트", "수채화", "애니메이션", "픽셀아트"],
+  art_direction: ["미니멀", "럭셔리", "키치", "빈티지", "시네마틱", "에디토리얼", "퓨처리스틱", "그래픽"],
+  rendering: ["사실적", "매트페인팅", "클레이 렌더", "벡터", "하이글로스 3D", "필름 그레인", "핸드페인팅"],
+  era: ["90년대", "Y2K", "미래적", "바로크", "동시대", "레트로퓨처리즘", "빈티지"],
+} as const;
+
+const legacyStylingToConceptStyle: Record<
+  string,
+  Partial<VisualPrompt["concept"]["style"]>
+> = {
+  "hero product shot": { medium: "사진", rendering: "사실적" },
+  "premium packshot": { medium: "사진", art_direction: "럭셔리", rendering: "사실적" },
+  "high-end e-commerce photography": { medium: "사진", rendering: "사실적" },
+  "catalog minimal": { art_direction: "미니멀" },
+  "utilitarian design": { art_direction: "미니멀" },
+  "apple-style keynote render": { medium: "3D", art_direction: "미니멀", rendering: "사실적" },
+  "campaign key visual": { art_direction: "시네마틱" },
+  "fashion campaign object": { medium: "사진", art_direction: "시네마틱", rendering: "사실적" },
+  "glossy acrylic pop": { medium: "3D", art_direction: "키치", rendering: "하이글로스 3D" },
+  "y2k aesthetic": { era: "Y2K", art_direction: "키치" },
+  "soft modernism": { art_direction: "미니멀" },
+  "quiet luxury": { art_direction: "럭셔리" },
+  "archival quality finish": { art_direction: "에디토리얼", rendering: "필름 그레인" },
+  "gallery display": { art_direction: "에디토리얼" },
+  "art book minimalism": { art_direction: "에디토리얼" },
+  "editorial still life": { medium: "사진", art_direction: "에디토리얼", rendering: "사실적" },
+  "graphic poster aesthetic": { medium: "일러스트", art_direction: "그래픽", rendering: "벡터" },
+  surreal: { art_direction: "시네마틱", rendering: "매트페인팅" },
+  "retro-futurism": { art_direction: "퓨처리스틱", era: "레트로퓨처리즘" },
+  vaporwave: { art_direction: "키치", era: "Y2K" },
+  "memphis design": { art_direction: "키치", era: "90년대" },
+  "avant-garde installation": { art_direction: "에디토리얼" },
+  bauhaus: { art_direction: "그래픽", era: "빈티지" },
+};
+
 const deepClone = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 const flattenOptionValues = (source: readonly string[] | Record<string, readonly string[]>) =>
   Array.isArray(source) ? [...source] : Object.values(source).flatMap((group) => [...group]);
@@ -32,10 +67,11 @@ const createOptionSet = (source: readonly string[] | Record<string, readonly str
 
 const legacyPositioningSet = new Set<string>(Object.keys(legacyPositioningPointMap));
 const allDefinedMoodSet = createOptionSet(chipOptions.concept.mood.brand_personality);
-const allDefinedStylingSet = createOptionSet(chipOptions.concept.styling);
-const allDefinedObjectMaterialSet = createOptionSet(chipOptions.object.material);
-const allDefinedObjectDetailSet = createOptionSet(chipOptions.object.details);
-const objectTextureSet = createOptionSet(chipOptions.object.texture);
+const allDefinedStylingSet = new Set(
+  [...flattenOptionValues(chipOptions.concept.styling), ...Object.values(conceptStyleOptions).flat()].map((item) =>
+    item.trim().toLowerCase()
+  )
+);
 const compositionViewSet = createOptionSet(chipOptions.composition.view);
 const compositionFramingSet = createOptionSet(chipOptions.composition.framing);
 const compositionLayoutSet = createOptionSet(chipOptions.composition.layout);
@@ -59,6 +95,7 @@ const textDirectionSet = createOptionSet(chipOptions.text_elements.text_directio
 const textNoteSet = createOptionSet(chipOptions.text_elements.note);
 const styleKeywordSet = createOptionSet(chipOptions.style_keywords);
 const negativePromptSet = createOptionSet(chipOptions.negative_prompt);
+const subjectPresetDetailSet = new Set([...chipOptions.object.material, ...chipOptions.object.texture].map((item) => item.trim().toLowerCase()));
 const invalidLegacyMoodSet = new Set<string>([
   "mass maket",
   "mass market",
@@ -138,12 +175,6 @@ const legacyObjectTextureAliasMap: Record<string, string[]> = {
   "powder-coated finish": ["matte"],
   "coated cardboard texture": ["matte"],
   "satin lacquer finish": ["high-gloss"],
-};
-const legacyObjectDetailAliasMap: Record<string, string[]> = {
-  "faceted sculptural silhouette": ["gem-cut faceted edges"],
-  "thin beveled edge body": ["chamfered edges"],
-  "soft curved monoblock form": ["seamless monoblock form"],
-  "rounded capsule-like consumer device shape": ["pill-shaped contour"],
 };
 const legacyCompositionViewAliasMap: Record<string, string> = {
   "front-facing product shot": "front view",
@@ -230,6 +261,34 @@ const sanitizeOptionValues = (values: string[], allowed: Set<string>) =>
 const sanitizeOptionValue = (value: string, allowed: Set<string>) => (allowed.has(value.trim().toLowerCase()) ? value : "");
 const sanitizeStylingValues = (values: string[]) =>
   sanitizeOptionValues(values.map(normalizeStylingValue), allDefinedStylingSet);
+const emptyConceptStyle = (): VisualPrompt["concept"]["style"] => ({
+  medium: "",
+  art_direction: "",
+  rendering: "",
+  era: "",
+});
+const normalizeConceptStyle = (
+  style: Partial<VisualPrompt["concept"]["style"]> | undefined,
+  stylingValues: string[]
+): VisualPrompt["concept"]["style"] => {
+  const next = {
+    ...emptyConceptStyle(),
+    ...style,
+  };
+
+  stylingValues.forEach((value) => {
+    const mapped = legacyStylingToConceptStyle[value.trim().toLowerCase()];
+    if (!mapped) return;
+    next.medium = next.medium || mapped.medium || "";
+    next.art_direction = next.art_direction || mapped.art_direction || "";
+    next.rendering = next.rendering || mapped.rendering || "";
+    next.era = next.era || mapped.era || "";
+  });
+
+  return next;
+};
+const buildStructuredStyling = (style: VisualPrompt["concept"]["style"]) =>
+  [style.medium, style.art_direction, style.rendering, style.era].map((item) => item.trim()).filter(Boolean);
 const expandLegacyObjectValues = (values: string[], aliasMap: Record<string, string[]>) =>
   values.flatMap((value) => aliasMap[value.trim().toLowerCase()] ?? [value]);
 const normalizeCompositionViewValue = (value: string) => legacyCompositionViewAliasMap[value.trim().toLowerCase()] ?? value;
@@ -295,9 +354,6 @@ const getStylingRecommendations = (point: PositioningPoint | null) =>
 const getStrongMoodRecommendations = (recommendations: { id: string; score: number }[]) =>
   recommendations.slice(0, Math.min(5, recommendations.length)).map((item) => item.id);
 
-const getStrongStylingRecommendations = (recommendations: { id: string; score: number }[]) =>
-  recommendations.slice(0, Math.min(3, recommendations.length)).map((item) => item.id);
-
 const inferPositioningPointFromPreset = (moodValues: string[], stylingValues: string[]): PositioningPoint | null => {
   const moodMatches = moodProfiles.filter((profile) => moodValues.includes(profile.id));
   const stylingMatches = stylingProfiles.filter((profile) => stylingValues.includes(profile.id));
@@ -323,10 +379,18 @@ const mergePrompt = (input: unknown): VisualPrompt => {
   }
 
   const source = input as Record<string, unknown>;
+  const sourceConcept = (source.concept as Record<string, unknown> | undefined) ?? {};
   const merged: VisualPrompt = {
     ...next,
     ...source,
-    concept: { ...next.concept, ...(source.concept as object) },
+    concept: {
+      ...next.concept,
+      ...sourceConcept,
+      style: {
+        ...next.concept.style,
+        ...((sourceConcept.style as Record<string, unknown> | undefined) ?? {}),
+      },
+    },
     object: {
       ...next.object,
       ...(source.object as object),
@@ -350,53 +414,64 @@ const mergePrompt = (input: unknown): VisualPrompt => {
 
   merged.prompt_type = "structured_visual_prompt";
   merged.concept.mood = Array.isArray(merged.concept.mood) ? sanitizeMoodValues(merged.concept.mood) : [];
-  const rawObjectDetails = Array.isArray(merged.object.details)
+  const rawSubjectDetails = Array.isArray(merged.object.details)
     ? merged.object.details.filter((item): item is string => typeof item === "string")
     : [];
   merged.concept.styling = sanitizeStylingValues([
     ...(Array.isArray(merged.concept.styling) ? merged.concept.styling : []),
-    ...rawObjectDetails.filter((item) => allDefinedStylingSet.has(item.trim().toLowerCase())),
+    ...rawSubjectDetails.filter((item) => allDefinedStylingSet.has(item.trim().toLowerCase())),
   ]);
-  merged.object.material = sanitizeOptionValues(
-    expandLegacyObjectValues(
-      [
-      ...(Array.isArray(merged.object.material) ? merged.object.material : []),
-      ...rawObjectDetails.filter((item) => allDefinedObjectMaterialSet.has(item.trim().toLowerCase())),
-      ],
-      legacyObjectMaterialAliasMap
-    ),
-    allDefinedObjectMaterialSet
+  merged.concept.style = normalizeConceptStyle(
+    {
+      medium: typeof merged.concept.style.medium === "string" ? merged.concept.style.medium : "",
+      art_direction: typeof merged.concept.style.art_direction === "string" ? merged.concept.style.art_direction : "",
+      rendering: typeof merged.concept.style.rendering === "string" ? merged.concept.style.rendering : "",
+      era: typeof merged.concept.style.era === "string" ? merged.concept.style.era : "",
+    },
+    merged.concept.styling
   );
-  merged.object.details = sanitizeOptionValues(
-    expandLegacyObjectValues(rawObjectDetails, legacyObjectDetailAliasMap),
-    allDefinedObjectDetailSet
-  );
+  merged.concept.styling = buildStructuredStyling(merged.concept.style);
   const legacyTexture = source.texture as
     | {
         surface?: unknown;
         package_surface?: unknown;
       }
     | undefined;
+  const rawObjectMaterial = Array.isArray(merged.object.material)
+    ? merged.object.material.filter((item): item is string => typeof item === "string")
+    : [];
   const rawObjectTexture = Array.isArray(merged.object.texture)
     ? merged.object.texture.filter((item): item is string => typeof item === "string")
     : [];
   const legacyObjectSurface = Array.isArray((source.object as { surface?: unknown[] } | undefined)?.surface)
     ? ((source.object as { surface?: unknown[] }).surface ?? []).filter((item): item is string => typeof item === "string")
     : [];
-  merged.object.texture = sanitizeOptionValues(
-    expandLegacyObjectValues(
-      [
-        ...rawObjectTexture,
-        ...legacyObjectSurface,
-        ...(Array.isArray(legacyTexture?.surface) ? legacyTexture.surface.filter((item): item is string => typeof item === "string") : []),
-        ...(Array.isArray(legacyTexture?.package_surface)
-          ? legacyTexture.package_surface.filter((item): item is string => typeof item === "string")
-          : []),
-      ],
-      legacyObjectTextureAliasMap
-    ),
-    objectTextureSet
+  const legacyTextureValues = [
+    ...rawObjectTexture,
+    ...legacyObjectSurface,
+    ...(Array.isArray(legacyTexture?.surface) ? legacyTexture.surface.filter((item): item is string => typeof item === "string") : []),
+    ...(Array.isArray(legacyTexture?.package_surface)
+      ? legacyTexture.package_surface.filter((item): item is string => typeof item === "string")
+      : []),
+  ];
+  const supportingObjectDetails = merged.object.inside_objects.flatMap((item) =>
+    [item.description || item.name, item.material].filter((value) => value.trim().length > 0)
   );
+  merged.object.details = Array.from(
+    new Set(
+      [
+        ...rawSubjectDetails,
+        ...expandLegacyObjectValues(rawObjectMaterial, legacyObjectMaterialAliasMap),
+        ...expandLegacyObjectValues(legacyTextureValues, legacyObjectTextureAliasMap),
+        ...supportingObjectDetails,
+      ]
+        .map((item) => item.trim())
+        .filter(Boolean)
+    )
+  );
+  merged.object.material = [];
+  merged.object.texture = [];
+  merged.object.inside_objects = [];
   const legacyCompositionAngle =
     typeof (source.composition as { angle?: unknown } | undefined)?.angle === "string"
       ? (source.composition as { angle: string }).angle
@@ -540,6 +615,7 @@ const mergePrompt = (input: unknown): VisualPrompt => {
   merged.concept = {
     mood: merged.concept.mood,
     styling: merged.concept.styling,
+    style: merged.concept.style,
   };
   merged.object = {
     main_object: merged.object.main_object,
@@ -565,6 +641,104 @@ const mergePrompt = (input: unknown): VisualPrompt => {
 
   return merged;
 };
+
+function SubjectDetailsField({
+  selected,
+  onChange,
+}: {
+  selected: string[];
+  onChange: (value: string[]) => void;
+}) {
+  const [supportingDraft, setSupportingDraft] = useState("");
+  const supportingSubjects = selected.filter((item) => !subjectPresetDetailSet.has(item.trim().toLowerCase()));
+
+  const addSupportingSubject = () => {
+    const normalized = supportingDraft.trim();
+    if (!normalized || selected.includes(normalized)) {
+      setSupportingDraft("");
+      return;
+    }
+
+    onChange([...selected, normalized]);
+    setSupportingDraft("");
+  };
+
+  const removeSupportingSubject = (value: string) => {
+    onChange(selected.filter((item) => item !== value));
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between gap-3">
+        <label className="text-sm font-medium text-stone-800">Details</label>
+        <span className="text-xs text-stone-400">{selected.length} selected</span>
+      </div>
+      <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+        <div className="space-y-6">
+          <ChipSelector
+            label="Material"
+            selected={selected}
+            options={chipOptions.object.material}
+            onChange={onChange}
+            includeSelectedInOptions={false}
+          />
+          <ChipSelector
+            label="Surface Finish"
+            selected={selected}
+            options={chipOptions.object.texture}
+            onChange={onChange}
+            includeSelectedInOptions={false}
+          />
+          <div className="space-y-3 border-t border-stone-200 pt-5">
+            <div className="flex items-center justify-between gap-3">
+              <label className="text-sm font-medium text-stone-800">Supporting subject</label>
+              <span className="text-xs text-stone-400">{supportingSubjects.length} added</span>
+            </div>
+            {supportingSubjects.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {supportingSubjects.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => removeSupportingSubject(item)}
+                    className="rounded-full border border-black bg-black px-3 py-1.5 text-sm text-white transition hover:bg-stone-800"
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-stone-200 bg-white px-3 py-4 text-sm text-stone-500">
+                직접 추가한 서포팅 서브젝트가 없습니다.
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                value={supportingDraft}
+                onChange={(event) => setSupportingDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    addSupportingSubject();
+                  }
+                }}
+                placeholder="서포팅 서브젝트를 입력하고 Enter를 누르세요"
+                className="min-w-0 flex-1 rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-stone-400 focus:ring-2 focus:ring-stone-200"
+              />
+              <button
+                type="button"
+                onClick={addSupportingSubject}
+                className="rounded-xl border border-stone-200 bg-stone-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-stone-700"
+              >
+                추가
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   const [prompt, setPrompt] = useState<VisualPrompt>(() => {
@@ -629,6 +803,10 @@ export default function App() {
     () => getStylingRecommendations(selectedPositioningPoint),
     [selectedPositioningPoint]
   );
+  const recommendedConceptStyle = useMemo(
+    () => normalizeConceptStyle(undefined, stylingRecommendations.map((item) => item.id)),
+    [stylingRecommendations]
+  );
   const filteredMoodGroups = useMemo(() => {
     const filtered = moodRecommendations.map((item) => item.id);
     const allMoodsSorted = [...chipOptions.concept.mood.brand_personality].sort((left, right) =>
@@ -640,27 +818,29 @@ export default function App() {
       "all moods": allMoodsSorted,
     };
   }, [moodRecommendations]);
-  const filteredStylingGroups = useMemo(() => {
-    const filtered = stylingRecommendations.map((item) => item.id);
-    const groupedStyling = Object.fromEntries(
-      Object.entries(chipOptions.concept.styling).map(([groupName, options]) => [
-        groupName,
-        [...options].sort((left, right) => left.localeCompare(right)),
-      ])
-    );
-
-    return {
-      suggested: filtered,
-      ...groupedStyling,
-    };
-  }, [stylingRecommendations]);
 
   const handleMoodChange = (value: string[]) => {
     patchNestedSection("concept", "mood", value);
   };
+  const handleConceptStyleChange = (
+    field: keyof VisualPrompt["concept"]["style"],
+    value: string
+  ) => {
+    setPrompt((current) => {
+      const nextStyle = {
+        ...current.concept.style,
+        [field]: value,
+      };
 
-  const handleStylingChange = (value: string[]) => {
-    patchNestedSection("concept", "styling", value);
+      return {
+        ...current,
+        concept: {
+          ...current.concept,
+          style: nextStyle,
+          styling: buildStructuredStyling(nextStyle),
+        },
+      };
+    });
   };
 
   useEffect(() => {
@@ -686,25 +866,31 @@ export default function App() {
           ...current.concept,
           mood: [],
           styling: [],
+          style: emptyConceptStyle(),
         },
       }));
       return;
     }
 
     const stronglyRecommended = getStrongMoodRecommendations(moodRecommendations);
-    const stronglyRecommendedStyling = getStrongStylingRecommendations(stylingRecommendations);
 
     setPrompt((current) => {
       const nextMood = stronglyRecommended;
-      const nextStyling = stronglyRecommendedStyling;
+      const nextStyle = recommendedConceptStyle;
+      const nextStyling = buildStructuredStyling(nextStyle);
       const moodUnchanged =
         nextMood.length === current.concept.mood.length &&
         nextMood.every((item, index) => item === current.concept.mood[index]);
+      const styleUnchanged =
+        nextStyle.medium === current.concept.style.medium &&
+        nextStyle.art_direction === current.concept.style.art_direction &&
+        nextStyle.rendering === current.concept.style.rendering &&
+        nextStyle.era === current.concept.style.era;
       const stylingUnchanged =
         nextStyling.length === current.concept.styling.length &&
         nextStyling.every((item, index) => item === current.concept.styling[index]);
 
-      if (moodUnchanged && stylingUnchanged) {
+      if (moodUnchanged && styleUnchanged && stylingUnchanged) {
         return current;
       }
 
@@ -713,11 +899,12 @@ export default function App() {
         concept: {
           ...current.concept,
           mood: nextMood,
+          style: nextStyle,
           styling: nextStyling,
         },
       };
     });
-  }, [moodRecommendations, selectedPositioningPoint, stylingRecommendations]);
+  }, [moodRecommendations, recommendedConceptStyle, selectedPositioningPoint]);
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
@@ -751,6 +938,7 @@ export default function App() {
     const rawPreset = deepClone(presets[presetName] ?? EMPTY_PROMPT);
     const nextMood = sanitizeMoodValues(rawPreset.concept.mood);
     const nextStyling = sanitizeStylingValues(rawPreset.concept.styling);
+    const nextStyle = normalizeConceptStyle(rawPreset.concept.style, nextStyling);
     const nextPositioningPoint = inferPositioningPointFromPreset(nextMood, nextStyling);
     const nextPrompt: VisualPrompt = {
       ...prompt,
@@ -764,7 +952,8 @@ export default function App() {
       concept: {
         ...prompt.concept,
         mood: nextMood,
-        styling: nextStyling,
+        style: nextStyle,
+        styling: buildStructuredStyling(nextStyle),
       },
     };
     skipNextPositioningSyncRef.current = true;
@@ -838,26 +1027,42 @@ export default function App() {
                 : "포지셔닝을 먼저 고르거나 무드를 직접 추가해보세요"
             }
           />
-          <GroupedChipSelector
-            label="Styling"
-            selected={prompt.concept.styling}
-            groups={filteredStylingGroups}
-            onChange={handleStylingChange}
-            collapsibleSections={{
-              "all styling": [
-                "industrial modernism",
-                "graphic and art direction",
-                "trend and digital culture",
-                "commercial image types",
-                "material and sensory tone",
-              ],
-            }}
-            placeholder={
-              selectedPositioningPoint
-                ? "현재 포지셔닝에 어울리는 스타일링을 직접 추가해보세요"
-                : "포지셔닝을 먼저 고르거나 스타일링을 직접 추가해보세요"
-            }
-          />
+          <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <label className="text-sm font-medium text-stone-800">Style</label>
+              <span className="text-xs text-stone-400">4 fields</span>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <TextInputField
+                label="Medium"
+                value={prompt.concept.style.medium}
+                onChange={(value) => handleConceptStyleChange("medium", value)}
+                suggestions={conceptStyleOptions.medium}
+                placeholder="사진, 3D, 일러스트"
+              />
+              <TextInputField
+                label="Art Direction"
+                value={prompt.concept.style.art_direction}
+                onChange={(value) => handleConceptStyleChange("art_direction", value)}
+                suggestions={conceptStyleOptions.art_direction}
+                placeholder="미니멀, 럭셔리, 키치"
+              />
+              <TextInputField
+                label="Rendering"
+                value={prompt.concept.style.rendering}
+                onChange={(value) => handleConceptStyleChange("rendering", value)}
+                suggestions={conceptStyleOptions.rendering}
+                placeholder="사실적, 매트페인팅, 클레이 렌더"
+              />
+              <TextInputField
+                label="Era"
+                value={prompt.concept.style.era}
+                onChange={(value) => handleConceptStyleChange("era", value)}
+                suggestions={conceptStyleOptions.era}
+                placeholder="90년대, Y2K, 미래적"
+              />
+            </div>
+          </div>
         </div>
       ),
     },
@@ -866,41 +1071,22 @@ export default function App() {
       content: (
         <div className="space-y-4">
           <TextInputField
-            label="Primary Subject"
+            label="Subject"
             value={prompt.object.main_object}
             onChange={(value) => patchNestedSection("object", "main_object", value)}
             placeholder="glossy black semi-transparent plastic pouch"
-            caption="실제로 화면에 등장하는 핵심 피사체를 적어주세요. Concept가 전체 방향이라면, 여기서는 무엇을 보여줄지를 구체적으로 씁니다."
+            caption="메인 요소를 적어주세요."
           />
           <TextInputField
-            label="Shape"
+            label="Subject Description"
             value={prompt.object.shape}
             onChange={(value) => patchNestedSection("object", "shape", value)}
-            placeholder="vertical rectangular pouch with heat-sealed edges"
-            caption="같은 피사체라도 형태와 구조가 다르면 이미지가 크게 달라집니다. 실루엣, 비율, 구조를 보충해 주세요."
+            placeholder="vertical rectangular pouch with heat-sealed edges, premium product hero object"
+            caption="요소에 대한 상세 설명을 적어주세요."
           />
-          <GroupedChipSelector
-            label="Details"
+          <SubjectDetailsField
             selected={prompt.object.details}
-            groups={chipOptions.object.details}
             onChange={(value) => patchNestedSection("object", "details", value)}
-            placeholder="커스텀 디테일을 입력하고 Enter를 누르세요"
-          />
-          <ChipSelector
-            label="Material"
-            selected={prompt.object.material}
-            options={chipOptions.object.material}
-            onChange={(value) => patchNestedSection("object", "material", value)}
-          />
-          <ChipSelector
-            label="Surface Finish"
-            selected={prompt.object.texture}
-            options={chipOptions.object.texture}
-            onChange={(value) => patchNestedSection("object", "texture", value)}
-          />
-          <NestedObjectList
-            items={prompt.object.inside_objects}
-            onChange={(value) => patchNestedSection("object", "inside_objects", value)}
           />
         </div>
       ),

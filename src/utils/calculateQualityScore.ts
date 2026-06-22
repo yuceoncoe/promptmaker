@@ -6,15 +6,21 @@ const hasItems = (items: string[]) => items.some((item) => item.trim().length > 
 export const calculateQualityScore = (prompt: VisualPrompt): number => {
   let score = 0;
 
-  if (hasItems(prompt.concept.mood) || hasItems(prompt.concept.styling)) {
+  if (
+    hasItems(prompt.concept.mood) ||
+    hasItems(prompt.concept.styling) ||
+    hasText(
+      prompt.concept.style.medium,
+      prompt.concept.style.art_direction,
+      prompt.concept.style.rendering,
+      prompt.concept.style.era
+    )
+  ) {
     score += 10;
   }
   if (
     hasText(prompt.object.main_object, prompt.object.shape) ||
-    hasItems(prompt.object.material) ||
-    hasItems(prompt.object.details) ||
-    hasItems(prompt.object.texture) ||
-    prompt.object.inside_objects.length > 0
+    hasItems(prompt.object.details)
   ) score += 20;
   if (
     hasText(
