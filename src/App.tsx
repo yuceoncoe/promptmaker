@@ -1012,6 +1012,7 @@ export default function App() {
   const sections = [
     {
       title: "Concept",
+      badgeCount: prompt.concept.mood.length + prompt.concept.styling.length,
       content: (
         <div className="space-y-4">
           <PositioningMap value={selectedPositioningPoint} options={positioningMap} onChange={setSelectedPositioningPoint} />
@@ -1068,6 +1069,13 @@ export default function App() {
     },
     {
       title: "Subject",
+      badgeCount:
+        (prompt.object.main_object ? 1 : 0) +
+        (prompt.object.shape ? 1 : 0) +
+        prompt.object.details.length +
+        prompt.object.material.length +
+        prompt.object.texture.length +
+        prompt.object.inside_objects.length,
       content: (
         <div className="space-y-4">
           <TextInputField
@@ -1093,6 +1101,11 @@ export default function App() {
     },
     {
       title: "Composition",
+      badgeCount:
+        (prompt.composition.view ? 1 : 0) +
+        (prompt.composition.framing ? 1 : 0) +
+        prompt.composition.layout.length +
+        (prompt.composition.depth ? 1 : 0),
       content: (
         <div className="space-y-4">
           <CameraViewPicker
@@ -1122,6 +1135,12 @@ export default function App() {
     },
     {
       title: "Lighting",
+      badgeCount:
+        (prompt.lighting.primary_light ? 1 : 0) +
+        (prompt.lighting.reflection ? 1 : 0) +
+        (prompt.lighting.secondary_light ? 1 : 0) +
+        (prompt.lighting.emissive ? 1 : 0) +
+        (prompt.lighting.shadow ? 1 : 0),
       content: (
         <div className="space-y-4">
           <TextInputField
@@ -1164,6 +1183,11 @@ export default function App() {
     },
     {
       title: "Background",
+      badgeCount:
+        (prompt.background.color ? 1 : 0) +
+        (prompt.background.style ? 1 : 0) +
+        (prompt.background.surface ? 1 : 0) +
+        (prompt.background.purpose ? 1 : 0),
       content: (
         <div className="space-y-4">
           <TextInputField
@@ -1195,6 +1219,10 @@ export default function App() {
     },
     {
       title: "Color Palette",
+      badgeCount:
+        prompt.color_palette.primary.length +
+        prompt.color_palette.accent.length +
+        (prompt.color_palette.contrast ? 1 : 0),
       content: (
         <div className="space-y-4">
           <ChipSelector
@@ -1220,6 +1248,12 @@ export default function App() {
     },
     {
       title: "Text Elements",
+      badgeCount:
+        (prompt.text_elements.top_left_text ? 1 : 0) +
+        (prompt.text_elements.price_label ? 1 : 0) +
+        prompt.text_elements.bottom_labels.length +
+        (prompt.text_elements.text_direction ? 1 : 0) +
+        (prompt.text_elements.note ? 1 : 0),
       content: (
         <div className="space-y-4">
           <TextInputField
@@ -1257,6 +1291,7 @@ export default function App() {
     },
     {
       title: "Style Keywords",
+      badgeCount: prompt.style_keywords.length,
       content: (
         <ChipSelector
           label="Style Keywords"
@@ -1268,6 +1303,7 @@ export default function App() {
     },
     {
       title: "Negative Prompt",
+      badgeCount: prompt.negative_prompt.length,
       content: (
         <ChipSelector
           label="Negative Prompt"
@@ -1303,7 +1339,7 @@ export default function App() {
               <PresetSelector value={selectedPreset} onChange={applyPreset} />
             </section>
             {sections.map((section, index) => (
-              <AccordionSection key={section.title} title={section.title} defaultOpen={index < 3}>
+              <AccordionSection key={section.title} title={section.title} defaultOpen={index < 3} badgeCount={section.badgeCount}>
                 {section.content}
               </AccordionSection>
             ))}
