@@ -28,7 +28,7 @@ export default function AccordionSection({
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-semibold text-stone-900">{title}</h2>
             {badgeCount > 0 ? (
-              <span className="flex h-5 items-center justify-center rounded-full bg-stone-100 px-2 text-xs font-medium text-stone-600">
+              <span className="inline-flex items-center justify-center rounded-full border border-black bg-black px-2.5 py-0.5 text-xs font-medium text-white">
                 {badgeCount}
               </span>
             ) : null}
