@@ -52,9 +52,13 @@ export default function ChipSelector({
   return (
     <div className="space-y-3">
       {label ? (
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
           <label className="text-sm font-medium text-stone-800">{label}</label>
-          <span className="text-xs text-stone-400">{selected.length} selected</span>
+          {selected.length > 0 ? (
+            <span className="inline-flex items-center justify-center rounded-full border border-black bg-black px-2 py-0.5 text-[10px] font-medium text-white transition">
+              {selected.length}
+            </span>
+          ) : null}
         </div>
       ) : null}
       <div className="flex flex-wrap gap-2">
