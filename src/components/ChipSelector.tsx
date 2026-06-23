@@ -11,6 +11,7 @@ interface ChipSelectorProps {
   allowCustom?: boolean;
   includeSelectedInOptions?: boolean;
   onAddCustom?: (value: string) => void;
+  singleSelect?: boolean;
 }
 
 const normalize = (value: string) => value.trim();
@@ -24,6 +25,7 @@ export default function ChipSelector({
   allowCustom = true,
   includeSelectedInOptions = true,
   onAddCustom,
+  singleSelect = false,
 }: ChipSelectorProps) {
   const [draft, setDraft] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,7 +48,11 @@ export default function ChipSelector({
     if (!normalized) return;
 
     const exists = selected.some((item) => item === normalized);
-    onChange(exists ? selected.filter((item) => item !== normalized) : [...selected, normalized]);
+    if (exists) {
+      onChange(selected.filter((item) => item !== normalized));
+    } else {
+      onChange(singleSelect ? [normalized] : [...selected, normalized]);
+    }
   };
 
   const submitCustomChip = () => {
@@ -59,7 +65,7 @@ export default function ChipSelector({
     if (onAddCustom) {
       onAddCustom(normalized);
     } else {
-      onChange([...selected, normalized]);
+      onChange(singleSelect ? [normalized] : [...selected, normalized]);
     }
     
     setDraft("");

@@ -5,6 +5,7 @@ import ChipSelector from "./components/ChipSelector";
 import GroupedChipSelector from "./components/GroupedChipSelector";
 import PositioningMap, { type PositioningPoint } from "./components/PositioningMap";
 import ResultPanel from "./components/ResultPanel";
+import SelectField from "./components/SelectField";
 import TextInputField from "./components/TextInputField";
 import Toast from "./components/Toast";
 import { chipOptions, moodProfiles, positioningMap, aesthetic_groups, era_groups, medium_groups, mood_groups } from "./data/chipOptions";
@@ -212,24 +213,6 @@ export default function App() {
     }
   };
 
-  const handleImport = async (file: File | null) => {
-    if (!file) return;
-    try {
-      const raw = await file.text();
-      const parsed = JSON.parse(raw) as UnifiedPrompt;
-      const mergedScene = { ...EMPTY_PROMPT.scene, ...(parsed.scene || {}) };
-      if (typeof mergedScene.composition === "string") {
-        mergedScene.composition = mergedScene.composition ? [mergedScene.composition] : [];
-      }
-      const newPrompt = { ...deepClone(EMPTY_PROMPT), ...parsed, scene: mergedScene };
-      setPrompt({ ...newPrompt, final_prompt: buildFinalPrompt(newPrompt) });
-      setSelectedPositioningPoint(null);
-      showToast("JSON imported successfully.", "success");
-    } catch {
-      showToast("Import failed. Please use a valid JSON file.", "error");
-    }
-  };
-
   const handleReset = () => {
     setPrompt(deepClone(EMPTY_PROMPT));
     setSelectedPositioningPoint(null);
@@ -241,11 +224,23 @@ export default function App() {
       title: "Subject",
       content: (
         <div className="space-y-4">
-          <TextInputField
+          <SelectField
             label="Subject Type"
             value={prompt.subject.type}
             onChange={(value) => patchNestedSection("subject", "type", value)}
-            placeholder="product, person, abstract, etc."
+            options={[
+              { label: "Product", value: "product" },
+              { label: "Person / Portrait", value: "person" },
+              { label: "Architecture / Interior", value: "architecture" },
+              { label: "Landscape / Nature", value: "landscape" },
+              { label: "Food / Culinary", value: "food" },
+              { label: "Abstract / Conceptual", value: "abstract" },
+              { label: "Animal", value: "animal" },
+              { label: "Vehicle", value: "vehicle" },
+              { label: "Fashion / Apparel", value: "fashion" },
+              { label: "Other", value: "other" },
+            ]}
+            placeholder="Select a subject type..."
           />
           <TextInputField
             label="Main Object"
@@ -281,6 +276,7 @@ export default function App() {
             groups={medium_groups}
             onChange={(val) => patchNestedSection("style", "medium", val)}
             placeholder="e.g. Photography, 3D Render, Illustration, Cinematic"
+            singleSelect={true}
           />
           <GroupedChipSelector
             label="Aesthetic / Art Direction"
@@ -352,11 +348,12 @@ export default function App() {
       title: "Constraints",
       content: (
         <div className="space-y-4">
-          <ChipSelector
+          <GroupedChipSelector
             label="Negative Prompt"
             selected={prompt.constraints.negative_prompt}
-            options={chipOptions.negative_prompt}
+            groups={chipOptions.negative_prompt}
             onChange={(val) => patchNestedSection("constraints", "negative_prompt", val)}
+            placeholder="Select negative prompts to avoid..."
           />
           <TextInputField
             label="Aspect Ratio"
@@ -405,7 +402,6 @@ export default function App() {
               downloadJson(prompt);
               showToast("JSON downloaded.", "success");
             }}
-            onImport={handleImport}
             onReset={handleReset}
           />
         </main>

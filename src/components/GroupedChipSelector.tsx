@@ -8,6 +8,7 @@ interface GroupedChipSelectorProps {
   onChange: (value: string[]) => void;
   placeholder?: string;
   collapsibleSections?: Record<string, string[]>;
+  singleSelect?: boolean;
 }
 
 export default function GroupedChipSelector({
@@ -17,6 +18,7 @@ export default function GroupedChipSelector({
   onChange,
   placeholder,
   collapsibleSections = {},
+  singleSelect = false,
 }: GroupedChipSelectorProps) {
   const [groupAssignments, setGroupAssignments] = useState<Record<string, string>>({});
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(
@@ -46,7 +48,7 @@ export default function GroupedChipSelector({
       ...current,
       [normalized]: groupName,
     }));
-    onChange([...selected, normalized]);
+    onChange(singleSelect ? [normalized] : [...selected, normalized]);
   };
 
   return (
@@ -79,6 +81,7 @@ export default function GroupedChipSelector({
                   onAddCustom={(val) => addCustomValueToGroup(groupName, val)}
                   includeSelectedInOptions={false}
                   placeholder={placeholder}
+                  singleSelect={singleSelect}
                 />
               </div>
             );
@@ -126,6 +129,7 @@ export default function GroupedChipSelector({
                           onAddCustom={(val) => addCustomValueToGroup(groupName, val)}
                           includeSelectedInOptions={false}
                           placeholder={placeholder}
+                          singleSelect={singleSelect}
                         />
                       </div>
                     );
