@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import AccordionSection from "./components/AccordionSection";
 import CameraViewPicker from "./components/CameraViewPicker";
 import ChipSelector from "./components/ChipSelector";
+import { ColorWheelPicker } from "./components/ColorWheelPicker";
 import GroupedChipSelector from "./components/GroupedChipSelector";
 import PositioningMap, { type PositioningPoint } from "./components/PositioningMap";
 import ResultPanel from "./components/ResultPanel";
@@ -26,17 +27,83 @@ const deepClone = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
+import ChipInputField from "./components/ChipInputField";
+import FramingPicker from "./components/FramingPicker";
+
 export default function App() {
   const [prompt, setPrompt] = useState<UnifiedPrompt>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
+        
+        const mergedSubject = { ...EMPTY_PROMPT.subject, ...(parsed.subject || {}) };
+        if (typeof mergedSubject.main_object === "string") {
+          mergedSubject.main_object = mergedSubject.main_object ? (mergedSubject.main_object as string).split(",").map(s => s.trim()).filter(Boolean) : [];
+        }
+        
         const mergedScene = { ...EMPTY_PROMPT.scene, ...(parsed.scene || {}) };
         if (typeof mergedScene.composition === "string") {
-          mergedScene.composition = mergedScene.composition ? [mergedScene.composition] : [];
+          mergedScene.composition = mergedScene.composition ? [(mergedScene.composition as string)] : [];
+        } else if (Array.isArray(mergedScene.composition)) {
+          const OBSOLETE_FRAMING = [
+            "vertical framing",
+            "square framing",
+            "generous whitespace",
+            "tight editorial crop",
+            "ultra-tight macro crop",
+            "full-bleed framing",
+            "wide landscape framing",
+          ];
+          mergedScene.composition = mergedScene.composition.filter((item: string) => !OBSOLETE_FRAMING.includes(item));
         }
-        return { ...deepClone(EMPTY_PROMPT), ...parsed, meta: { ...EMPTY_PROMPT.meta, ...(parsed.meta || {}) }, subject: { ...EMPTY_PROMPT.subject, ...(parsed.subject || {}) }, scene: mergedScene, style: { ...EMPTY_PROMPT.style, ...(parsed.style || {}) }, constraints: { ...EMPTY_PROMPT.constraints, ...(parsed.constraints || {}) } };
+        
+        const mergedBackground = { ...EMPTY_PROMPT.background, ...(parsed.background || {}) };
+        // Migrate legacy scene.background if exists
+        if (parsed.scene && 'background' in parsed.scene && parsed.scene.background && !parsed.background) {
+           mergedBackground.type = "environment";
+           mergedBackground.environment = parsed.scene.background as any;
+        }
+        
+        if (typeof mergedBackground.environment === "string") {
+           mergedBackground.environment = mergedBackground.environment ? (mergedBackground.environment as string).split(",").map(s => s.trim()).filter(Boolean) : [];
+        }
+        if (typeof mergedBackground.props === "string") {
+           mergedBackground.props = mergedBackground.props ? (mergedBackground.props as string).split(",").map(s => s.trim()).filter(Boolean) : [];
+        }
+
+        const mergedConstraints = { ...EMPTY_PROMPT.constraints, ...(parsed.constraints || {}) };
+        
+        // Migrate legacy constraints.aspect_ratio to scene.framing
+        if (parsed.constraints && 'aspect_ratio' in parsed.constraints) {
+          mergedScene.framing = mergedScene.framing || (parsed.constraints as any).aspect_ratio;
+        }
+
+        const mergedStyle = { ...EMPTY_PROMPT.style, ...(parsed.style || {}) };
+        if (Array.isArray(mergedStyle.lighting)) {
+          const OBSOLETE_LIGHTING = [
+            "soft studio lighting", "strong overhead studio light", "large softbox from upper left",
+            "diffused commercial lighting", "bright catalog lighting", "moody spotlight lighting",
+            "strong glossy highlights", "soft premium highlights", "long reflective highlights",
+            "clean product reflections", "crisp metallic highlights", "subtle satin highlights",
+            "glass-like specular highlights", "soft ambient fill lighting", "sharp directional rim lighting",
+            "warm internal glow", "subtle LED glow", "neon edge glow", "soft ambient bloom", "screen-lit glow",
+            "soft natural shadow", "deep product shadow", "minimal shadow", "dramatic shadow",
+            "sharp directional shadow", "diffused floor shadow", "floating contact shadow"
+          ];
+          mergedStyle.lighting = mergedStyle.lighting.filter((item: string) => !OBSOLETE_LIGHTING.includes(item));
+        }
+
+        return {
+          ...deepClone(EMPTY_PROMPT),
+          ...parsed,
+          meta: { ...EMPTY_PROMPT.meta, ...(parsed.meta || {}) },
+          subject: mergedSubject,
+          background: mergedBackground,
+          scene: mergedScene,
+          style: mergedStyle,
+          constraints: mergedConstraints,
+        };
       }
       return deepClone(EMPTY_PROMPT);
     } catch {
@@ -153,20 +220,14 @@ export default function App() {
     });
   }, [moodRecommendations, selectedPositioningPoint]);
 
-  // Merge legacy chipOptions for suggestions
-  const mergedLightingOptions = useMemo(() => [
-    ...chipOptions.lighting.primary_light,
-    ...chipOptions.lighting.reflection,
-    ...chipOptions.lighting.secondary_light,
-    ...chipOptions.lighting.emissive,
-    ...chipOptions.lighting.shadow
-  ], []);
+  // Legacy lighting chipOptions have been refactored.
 
   const mergedBackgroundOptions = useMemo(() => [
-    ...chipOptions.background.color,
-    ...chipOptions.background.style,
-    ...chipOptions.background.surface,
-    ...chipOptions.background.purpose
+    ...chipOptions.background.environment
+  ], []);
+
+  const mergedPropsOptions = useMemo(() => [
+    ...chipOptions.background.props
   ], []);
 
   const subjectDetailsGroups = useMemo(() => ({
@@ -188,7 +249,7 @@ export default function App() {
   };
 
   const patchNestedSection = <
-    K extends keyof Pick<UnifiedPrompt, "meta" | "subject" | "scene" | "style" | "constraints">,
+    K extends keyof Pick<UnifiedPrompt, "meta" | "subject" | "background" | "scene" | "style" | "constraints">,
     F extends keyof UnifiedPrompt[K]
   >(
     section: K,
@@ -242,11 +303,11 @@ export default function App() {
             ]}
             placeholder="Select a subject type..."
           />
-          <TextInputField
+          <ChipInputField
             label="Main Object"
             value={prompt.subject.main_object}
             onChange={(value) => patchNestedSection("subject", "main_object", value)}
-            placeholder="glossy black semi-transparent plastic pouch"
+            placeholder="e.g. glossy black plastic pouch, coffee cup"
           />
           <GroupedChipSelector
             label="Subject Details (Material, Texture, Shape)"
@@ -299,13 +360,6 @@ export default function App() {
       title: "Scene & Composition",
       content: (
         <div className="space-y-4">
-          <TextInputField
-            label="Background"
-            value={prompt.scene.background}
-            onChange={(value) => patchNestedSection("scene", "background", value)}
-            suggestions={mergedBackgroundOptions}
-            placeholder="e.g. Minimalist white studio, Natural outdoor lighting"
-          />
           <CameraViewPicker
              value={prompt.scene.composition.find(item => (chipOptions.composition.view as readonly string[]).includes(item)) || "front view"}
              onConfirm={(newView) => {
@@ -314,12 +368,72 @@ export default function App() {
                patchNestedSection("scene", "composition", next);
              }}
           />
+          <FramingPicker
+            value={prompt.scene.framing}
+            onChange={(value) => patchNestedSection("scene", "framing", value)}
+          />
           <GroupedChipSelector
             label="Additional Composition Details"
-            selected={prompt.scene.composition}
-            groups={chipOptions.composition}
-            onChange={(val) => patchNestedSection("scene", "composition", val)}
+            selected={prompt.scene.composition.filter(item => !(chipOptions.composition.view as readonly string[]).includes(item))}
+            groups={(() => { const { view, ...rest } = chipOptions.composition; return rest; })()}
+            onChange={(val) => {
+              const viewItems = prompt.scene.composition.filter(item => (chipOptions.composition.view as readonly string[]).includes(item));
+              patchNestedSection("scene", "composition", [...viewItems, ...val]);
+            }}
             placeholder="e.g. Center framed, high angle"
+          />
+        </div>
+      ),
+    },
+    {
+      title: "Background",
+      content: (
+        <div className="space-y-4">
+          <div className="flex bg-stone-100 p-1 rounded-lg w-fit">
+            <button
+              onClick={() => patchNestedSection("background", "type", "solid")}
+              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
+                prompt.background.type === "solid"
+                  ? "bg-white shadow text-stone-900"
+                  : "text-stone-500 hover:text-stone-700"
+              }`}
+            >
+              Solid Color
+            </button>
+            <button
+              onClick={() => patchNestedSection("background", "type", "environment")}
+              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
+                prompt.background.type === "environment"
+                  ? "bg-white shadow text-stone-900"
+                  : "text-stone-500 hover:text-stone-700"
+              }`}
+            >
+              Environment
+            </button>
+          </div>
+
+          {prompt.background.type === "solid" ? (
+            <ColorWheelPicker
+              label="Background Color"
+              value={prompt.background.color}
+              onChange={(value) => patchNestedSection("background", "color", value)}
+            />
+          ) : (
+            <ChipInputField
+              label="Environment / Atmosphere"
+              value={prompt.background.environment}
+              onChange={(value) => patchNestedSection("background", "environment", value)}
+              placeholder="e.g. Minimalist white studio, Natural outdoor lighting"
+              suggestions={mergedBackgroundOptions}
+            />
+          )}
+
+          <ChipInputField
+            label="Additional Props / Objects"
+            value={prompt.background.props}
+            onChange={(value) => patchNestedSection("background", "props", value)}
+            placeholder="e.g. Wooden pedestal, Floating geometric shapes"
+            suggestions={mergedPropsOptions}
           />
         </div>
       ),
@@ -328,18 +442,19 @@ export default function App() {
       title: "Lighting & Color",
       content: (
         <div className="space-y-4">
-          <ChipSelector
+          <GroupedChipSelector
             label="Lighting Setup"
             selected={prompt.style.lighting}
-            options={mergedLightingOptions}
+            groups={chipOptions.lighting}
             onChange={(val) => patchNestedSection("style", "lighting", val)}
             placeholder="e.g. Soft studio lighting, Dramatic rim light, Cinematic"
           />
-          <ChipSelector
-            label="Color Palette"
-            selected={prompt.style.color_palette}
-            options={[...chipOptions.color_palette.primary, ...chipOptions.color_palette.accent]}
-            onChange={(val) => patchNestedSection("style", "color_palette", val)}
+          <GroupedChipSelector
+            label="Color Temperature & Tones"
+            selected={prompt.style.color_temperature}
+            groups={chipOptions.color_temperature}
+            onChange={(val) => patchNestedSection("style", "color_temperature", val)}
+            placeholder="e.g. Warm golden hues, Teal and orange cinematic grading"
           />
         </div>
       ),
@@ -356,10 +471,11 @@ export default function App() {
             placeholder="Select negative prompts to avoid..."
           />
           <TextInputField
-            label="Aspect Ratio"
-            value={prompt.constraints.aspect_ratio}
-            onChange={(value) => patchNestedSection("constraints", "aspect_ratio", value)}
-            placeholder="e.g. 1:1, 16:9, 9:16"
+            label="Custom Rules & Parameters"
+            value={prompt.constraints.custom_rules}
+            onChange={(value) => patchNestedSection("constraints", "custom_rules", value)}
+            placeholder="e.g. Include negative space for text on the right side"
+            multiline
           />
         </div>
       ),

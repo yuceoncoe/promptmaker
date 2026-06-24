@@ -16,16 +16,19 @@ export const calculateQualityScore = (prompt: UnifiedPrompt): number => {
     score += 20;
   }
   if (
-    hasText(prompt.subject.main_object, prompt.subject.type) ||
+    hasText(prompt.subject.type) ||
+    hasItems(prompt.subject.main_object) ||
     hasItems(prompt.subject.details)
   ) score += 30;
   if (
-    hasText(prompt.scene.background) ||
+    hasText(prompt.background.color) ||
+    hasItems(prompt.background.environment) ||
+    hasItems(prompt.background.props) ||
     hasItems(prompt.scene.composition)
   ) score += 20;
   if (
     hasItems(prompt.style.lighting) ||
-    hasItems(prompt.style.color_palette)
+    hasItems(prompt.style.color_temperature)
   ) score += 20;
   if (prompt.constraints.negative_prompt.filter((item) => item.trim()).length >= 3) score += 10;
 

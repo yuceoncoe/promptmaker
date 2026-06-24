@@ -9,7 +9,7 @@ export const buildFinalPrompt = (prompt: UnifiedPrompt): string => {
   // Subject
   const objectLead = [
     prompt.subject.type !== "other" ? `${prompt.subject.type}:` : "",
-    prompt.subject.main_object,
+    joinList(prompt.subject.main_object),
   ]
     .filter(nonEmpty)
     .join(" ")
@@ -23,13 +23,26 @@ export const buildFinalPrompt = (prompt: UnifiedPrompt): string => {
     parts.push(`Subject details: ${joinList(prompt.subject.details)}.`);
   }
 
+  // Background
+  const bgParts = [];
+  if (prompt.background.type === "solid" && prompt.background.color.trim()) {
+    bgParts.push(`${prompt.background.color.trim()} background`);
+  } else if (prompt.background.type === "environment" && prompt.background.environment.length > 0) {
+    bgParts.push(joinList(prompt.background.environment));
+  }
+
+  if (prompt.background.props.length > 0) {
+    bgParts.push(`with ${joinList(prompt.background.props)}`);
+  }
+
+  if (bgParts.length > 0) {
+    parts.push(`Background: ${bgParts.join(" ")}.`);
+  }
+
   // Scene & Composition
-  const sceneParts = [
-    prompt.scene.background,
-    ...prompt.scene.composition,
-  ].filter(nonEmpty);
+  const sceneParts = [...prompt.scene.composition].filter(nonEmpty);
   if (sceneParts.length > 0) {
-    parts.push(`Scene & Composition: ${sceneParts.join(", ")}.`);
+    parts.push(`Composition: ${sceneParts.join(", ")}.`);
   }
 
   // Style
@@ -47,12 +60,24 @@ export const buildFinalPrompt = (prompt: UnifiedPrompt): string => {
   if (prompt.style.mood.length > 0) {
     parts.push(`Mood: ${joinList(prompt.style.mood)}.`);
   }
-  if (prompt.style.color_palette.length > 0) {
-    parts.push(`Colors: ${joinList(prompt.style.color_palette)}.`);
+  if (prompt.style.color_temperature.length > 0) {
+    parts.push(`Color grading: ${joinList(prompt.style.color_temperature)}.`);
   }
 
   if (prompt.style.lighting.length > 0) {
     parts.push(`Lighting: ${joinList(prompt.style.lighting)}.`);
+  }
+
+  if (prompt.constraints.custom_rules.trim()) {
+    parts.push(prompt.constraints.custom_rules.trim());
+  }
+
+  if (prompt.constraints.negative_prompt.length > 0) {
+    parts.push(`--no ${prompt.constraints.negative_prompt.join(", ")}`);
+  }
+
+  if (prompt.scene.framing) {
+    parts.push(`--ar ${prompt.scene.framing}`);
   }
 
   return parts.join(" ").replace(/\s+/g, " ").trim();

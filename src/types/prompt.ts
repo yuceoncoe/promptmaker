@@ -5,11 +5,17 @@ export interface UnifiedPrompt {
   };
   subject: {
     type: string;
-    main_object: string;
+    main_object: string[];
     details: string[];
   };
+  background: {
+    type: "solid" | "environment";
+    color: string;
+    environment: string[];
+    props: string[];
+  };
   scene: {
-    background: string;
+    framing: string;
     composition: string[];
   };
   style: {
@@ -17,42 +23,48 @@ export interface UnifiedPrompt {
     aesthetic: string[];
     era: string[];
     mood: string[];
-    color_palette: string[];
+    color_temperature: string[];
     lighting: string[];
   };
   constraints: {
     negative_prompt: string[];
-    aspect_ratio: string;
+    custom_rules: string;
   };
   final_prompt: string;
 }
 
 export const EMPTY_PROMPT: UnifiedPrompt = {
-
   meta: {
+    id: "",
     title: "",
     purpose: "",
   },
   subject: {
-    type: "product",
-    main_object: "",
+    type: "other",
+    main_object: [],
     details: [],
   },
+  background: {
+    type: "solid",
+    color: "",
+    environment: [],
+    props: [],
+  },
   scene: {
-    background: "",
+    framing: "",
     composition: [],
   },
   style: {
+    mood: [],
+    lighting: [],
+    color_temperature: [],
     medium: [],
     aesthetic: [],
     era: [],
-    mood: [],
-    color_palette: [],
-    lighting: [],
   },
   constraints: {
     negative_prompt: [],
-    aspect_ratio: "1:1",
+    custom_rules: "",
   },
   final_prompt: "",
 };

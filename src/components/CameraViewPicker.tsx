@@ -21,16 +21,25 @@ const VIEW_POSES: Record<string, Pose> = {
   "three-quarter front right view": { yaw: -34, pitch: 12 },
   "three-quarter rear left view": { yaw: 146, pitch: 12 },
   "three-quarter rear right view": { yaw: -146, pitch: 12 },
-  "high-angle front view": { yaw: 0, pitch: 22 },
-  "high-angle three-quarter left view": { yaw: 24, pitch: 24 },
-  "high-angle three-quarter right view": { yaw: -24, pitch: 24 },
-  "bird's-eye view": { yaw: 0, pitch: 52 },
-  "overhead view": { yaw: 0, pitch: 72 },
-  "flat lay": { yaw: 0, pitch: 78 },
   "low-angle front view": { yaw: 0, pitch: -24 },
   "low-angle three-quarter left view": { yaw: 24, pitch: -22 },
   "low-angle three-quarter right view": { yaw: -24, pitch: -22 },
+  "low-angle left profile view": { yaw: 90, pitch: -24 },
+  "low-angle right profile view": { yaw: -90, pitch: -24 },
+  "low-angle rear three-quarter left view": { yaw: 146, pitch: -24 },
+  "low-angle rear three-quarter right view": { yaw: -146, pitch: -24 },
   "low-angle rear view": { yaw: 180, pitch: -24 },
+  "high-angle front view": { yaw: 0, pitch: 22 },
+  "high-angle three-quarter left view": { yaw: 24, pitch: 24 },
+  "high-angle three-quarter right view": { yaw: -24, pitch: 24 },
+  "high-angle left profile view": { yaw: 90, pitch: 24 },
+  "high-angle right profile view": { yaw: -90, pitch: 24 },
+  "high-angle rear three-quarter left view": { yaw: 146, pitch: 24 },
+  "high-angle rear three-quarter right view": { yaw: -146, pitch: 24 },
+  "high-angle rear view": { yaw: 180, pitch: 24 },
+  "bird's-eye view": { yaw: 0, pitch: 52 },
+  "overhead view": { yaw: 0, pitch: 72 },
+  "flat lay": { yaw: 0, pitch: 78 },
   "isometric left view": { yaw: 42, pitch: 34 },
   "isometric right view": { yaw: -42, pitch: 34 },
   "rear isometric left view": { yaw: 138, pitch: 34 },
@@ -42,9 +51,10 @@ const clamp = (value: number, min: number, max: number) => Math.min(Math.max(val
 
 const VIEW_ENTRIES = Object.entries(VIEW_POSES);
 const normalizeYaw = (yaw: number) => {
-  if (yaw > 180) return yaw - 360;
-  if (yaw <= -180) return yaw + 360;
-  return yaw;
+  let y = yaw % 360;
+  if (y > 180) y -= 360;
+  if (y <= -180) y += 360;
+  return y;
 };
 
 const getPoseDistance = (left: Pose, right: Pose) => {
@@ -148,8 +158,8 @@ export default function CameraViewPicker({ value, onConfirm }: CameraViewPickerP
                 transform: `rotateX(${-pose.pitch}deg) rotateY(${pose.yaw}deg)`,
               }}
             >
-              <div className="absolute inset-0 border border-white/20 bg-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.3)] [transform:translateZ(72px)] sm:[transform:translateZ(80px)]">
-                <div className="absolute left-1/2 top-3 -translate-x-1/2 rounded-full border border-black/10 bg-black/35 px-2 py-1 text-[10px] font-semibold tracking-[0.08em] text-white/85">
+              <div className="absolute inset-0 border border-blue-400/30 bg-blue-500/30 shadow-[0_20px_60px_rgba(0,0,0,0.3)] [transform:translateZ(72px)] sm:[transform:translateZ(80px)]">
+                <div className="absolute left-1/2 top-3 -translate-x-1/2 rounded-full border border-black/10 bg-black/40 px-2 py-1 text-[10px] font-semibold tracking-[0.08em] text-white/90">
                   FRONT
                 </div>
               </div>
