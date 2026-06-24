@@ -72,13 +72,19 @@ export const buildFinalPrompt = (prompt: UnifiedPrompt): string => {
     parts.push(prompt.constraints.custom_rules.trim());
   }
 
+  const baseText = parts.join(" ").replace(/\s+/g, " ").trim();
+  
+  const params: string[] = [];
   if (prompt.constraints.negative_prompt.length > 0) {
-    parts.push(`--no ${prompt.constraints.negative_prompt.join(", ")}`);
+    params.push(`--no ${prompt.constraints.negative_prompt.join(", ")}`);
   }
-
   if (prompt.scene.framing) {
-    parts.push(`--ar ${prompt.scene.framing}`);
+    params.push(`--ar ${prompt.scene.framing}`);
   }
 
-  return parts.join(" ").replace(/\s+/g, " ").trim();
+  if (params.length > 0) {
+    return `${baseText}\n\n${params.join(" ")}`;
+  }
+  
+  return baseText;
 };
