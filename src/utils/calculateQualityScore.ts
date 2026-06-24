@@ -16,7 +16,6 @@ export const calculateQualityScore = (prompt: UnifiedPrompt): number => {
     score += 20;
   }
   if (
-    hasText(prompt.subject.type) ||
     hasItems(prompt.subject.main_object) ||
     hasItems(prompt.subject.details)
   ) score += 30;

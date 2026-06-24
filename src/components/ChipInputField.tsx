@@ -92,11 +92,13 @@ export default function ChipInputField({
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
+          onBlur={handleAdd}
           placeholder={placeholder}
           className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 pr-12 text-sm text-stone-900 outline-none transition focus:border-stone-400 focus:ring-2 focus:ring-stone-200"
         />
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={handleAdd}
           disabled={!inputValue.trim()}
           className="absolute right-1.5 p-1.5 text-stone-400 hover:text-stone-900 disabled:opacity-50 transition-colors"
@@ -115,7 +117,10 @@ export default function ChipInputField({
               <button
                 key={suggestion}
                 type="button"
-                onClick={() => handleSuggestionClick(suggestion)}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handleSuggestionClick(suggestion);
+                }}
                 className={[
                   "rounded-full border px-3 py-1.5 text-sm transition",
                   active
