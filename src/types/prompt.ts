@@ -1,7 +1,9 @@
 export interface UnifiedPrompt {
   meta: {
+    id?: string;
     title: string;
     purpose: string;
+    target_ai?: "midjourney" | "conversational";
   };
   subject: {
     type: string;
@@ -30,6 +32,11 @@ export interface UnifiedPrompt {
     negative_prompt: string[];
     custom_rules: string;
   };
+  midjourney: {
+    version: string;
+    stylize: number;
+    chaos: number;
+  };
   final_prompt: string;
 }
 
@@ -38,6 +45,7 @@ export const EMPTY_PROMPT: UnifiedPrompt = {
     id: "",
     title: "",
     purpose: "",
+    target_ai: "conversational",
   },
   subject: {
     type: "other",
@@ -65,6 +73,11 @@ export const EMPTY_PROMPT: UnifiedPrompt = {
   constraints: {
     negative_prompt: [],
     custom_rules: "",
+  },
+  midjourney: {
+    version: "",
+    stylize: 100,
+    chaos: 0,
   },
   final_prompt: "",
 };

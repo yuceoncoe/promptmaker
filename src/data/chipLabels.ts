@@ -226,7 +226,6 @@ export const chipLabelTranslations: Record<string, string> = {
   "generous whitespace": "넉넉한 여백",
   "tight editorial crop": "타이트한 에디토리얼 크롭",
   "ultra-tight macro crop": "아주 타이트한 매크로 크롭",
-  "centered composition": "중앙 집중형 배치",
   "symmetrical composition": "좌우 대칭 배치",
   "asymmetrical composition": "비대칭 배치",
   "rule of thirds": "삼분할 배치 (황금비율)",

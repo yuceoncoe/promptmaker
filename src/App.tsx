@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import AccordionSection from "./components/AccordionSection";
 import CameraViewPicker from "./components/CameraViewPicker";
-import ChipSelector from "./components/ChipSelector";
 import { ColorWheelPicker } from "./components/ColorWheelPicker";
 import GroupedChipSelector from "./components/GroupedChipSelector";
 import PositioningMap, { type PositioningPoint } from "./components/PositioningMap";
@@ -103,6 +102,7 @@ export default function App() {
           scene: mergedScene,
           style: mergedStyle,
           constraints: mergedConstraints,
+          midjourney: { ...EMPTY_PROMPT.midjourney, ...(parsed.midjourney || {}) },
         };
       }
       return deepClone(EMPTY_PROMPT);
@@ -249,7 +249,7 @@ export default function App() {
   };
 
   const patchNestedSection = <
-    K extends keyof Pick<UnifiedPrompt, "meta" | "subject" | "background" | "scene" | "style" | "constraints">,
+    K extends keyof Pick<UnifiedPrompt, "meta" | "subject" | "background" | "scene" | "style" | "constraints" | "midjourney">,
     F extends keyof UnifiedPrompt[K]
   >(
     section: K,
@@ -464,11 +464,11 @@ export default function App() {
       content: (
         <div className="space-y-4">
           <GroupedChipSelector
-            label="Negative Prompt"
+            label={prompt.meta?.target_ai === "conversational" ? "Exclusion Instructions" : "Negative Prompt (--no)"}
             selected={prompt.constraints.negative_prompt}
             groups={chipOptions.negative_prompt}
             onChange={(val) => patchNestedSection("constraints", "negative_prompt", val)}
-            placeholder="Select negative prompts to avoid..."
+            placeholder={prompt.meta?.target_ai === "conversational" ? "Select elements to explicitly avoid..." : "Select negative prompts to avoid..."}
           />
           <TextInputField
             label="Custom Rules & Parameters"
@@ -485,17 +485,14 @@ export default function App() {
   return (
     <div className="min-h-screen bg-stone-25 text-stone-900">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <header className="mb-6 rounded-[28px] border border-stone-200 bg-white px-6 py-5 shadow-panel">
-          <p className="text-sm font-medium uppercase tracking-normal text-stone-500">Visual Prompt Maker</p>
-          <div className="mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div>
+        <header className="mb-6 rounded-[28px] border border-stone-200 bg-white px-6 py-5 shadow-panel flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+          <div>
+            <p className="text-sm font-medium uppercase tracking-normal text-stone-500">Visual Prompt Maker</p>
+            <div className="mt-2">
               <h1 className="text-2xl font-semibold text-stone-950">Structured prompt builder for image generation</h1>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">
                 Build consistent JSON prompts, shape the final English prompt automatically, and keep reusable visual language in one place.
               </p>
-            </div>
-            <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-600">
-              Schema locked to <span className="font-medium text-stone-900">UnifiedPrompt</span>
             </div>
           </div>
         </header>
@@ -512,6 +509,8 @@ export default function App() {
           <ResultPanel
             prompt={prompt}
             score={score}
+            onTargetAiChange={(ai) => patchNestedSection("meta", "target_ai", ai)}
+            onMidjourneyParamChange={(field, value) => patchNestedSection("midjourney", field, value)}
             onCopyJson={() => copyText(JSON.stringify(prompt, null, 2), "JSON copied to clipboard.")}
             onCopyPrompt={() => copyText(prompt.final_prompt, "Final prompt copied to clipboard.")}
             onDownload={() => {

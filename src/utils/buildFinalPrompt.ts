@@ -74,17 +74,45 @@ export const buildFinalPrompt = (prompt: UnifiedPrompt): string => {
 
   const baseText = parts.join(" ").replace(/\s+/g, " ").trim();
   
-  const params: string[] = [];
-  if (prompt.constraints.negative_prompt.length > 0) {
-    params.push(`--no ${prompt.constraints.negative_prompt.join(", ")}`);
-  }
-  if (prompt.scene.framing) {
-    params.push(`--ar ${prompt.scene.framing}`);
+  const additionalSections: string[] = [];
+
+  if (prompt.meta?.target_ai === "conversational") {
+    if (prompt.constraints.negative_prompt.length > 0) {
+      additionalSections.push(`Exclusion Instructions:\nEnsure there is absolutely no: ${joinList(prompt.constraints.negative_prompt)}.`);
+    }
+    if (prompt.scene.framing) {
+      additionalSections.push(`Format:\n${prompt.scene.framing} aspect ratio.`);
+    }
   }
 
+  const params: string[] = [];
+  if (prompt.meta?.target_ai !== "conversational") {
+    if (prompt.constraints.negative_prompt.length > 0) {
+      params.push(`--no ${prompt.constraints.negative_prompt.join(", ")}`);
+    }
+    if (prompt.midjourney) {
+      if (prompt.midjourney.version) {
+        params.push(`${prompt.midjourney.version}`);
+      }
+      if (prompt.midjourney.stylize !== undefined && prompt.midjourney.stylize !== 100) {
+        params.push(`--s ${prompt.midjourney.stylize}`);
+      }
+      if (prompt.midjourney.chaos !== undefined && prompt.midjourney.chaos > 0) {
+        params.push(`--c ${prompt.midjourney.chaos}`);
+      }
+    }
+    if (prompt.scene.framing) {
+      params.push(`--ar ${prompt.scene.framing}`);
+    }
+  }
+
+  const finalParts = [baseText];
+  if (additionalSections.length > 0) {
+    finalParts.push(additionalSections.join("\n\n"));
+  }
   if (params.length > 0) {
-    return `${baseText}\n\n${params.join(" ")}`;
+    finalParts.push(params.join(" "));
   }
   
-  return baseText;
+  return finalParts.join("\n\n");
 };
